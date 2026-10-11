@@ -1,0 +1,37 @@
+{
+  "updated": "2026-10-11 23:40:27",
+  "results": {
+    "B2-1": {
+      "status": "fail",
+      "result": "код виходу 128",
+      "output": "fatal: not a git repository (or any of the parent directories): .git",
+      "duration": 0.05,
+      "at": "2026-10-11 23:35:35",
+      "kind": "auto"
+    },
+    "B2-3": {
+      "status": "blocked",
+      "result": "venv не створено — виконай Блок 2, крок 3",
+      "output": "",
+      "duration": null,
+      "at": "2026-10-11 23:35:35",
+      "kind": "auto"
+    },
+    "B4-4": {
+      "status": "blocked",
+      "result": "venv не створено — виконай Блок 2, крок 3",
+      "output": "",
+      "duration": null,
+      "at": "2026-10-11 23:35:35",
+      "kind": "auto"
+    },
+    "B8-3": {
+      "status": "blocked",
+      "result": "venv не створено — виконай Блок 2, крок 3",
+      "output": "",
+      "duration": null,
+      "at": "2026-10-11 23:35:35",
+      "kind": "auto"
+    }
+  }
+}
