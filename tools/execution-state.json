@@ -1,20 +1,20 @@
 {
-  "updated": "2026-10-11 23:40:27",
+  "updated": "2026-10-12 00:07:17",
   "results": {
     "B2-1": {
-      "status": "fail",
-      "result": "код виходу 128",
-      "output": "fatal: not a git repository (or any of the parent directories): .git",
-      "duration": 0.05,
-      "at": "2026-10-11 23:35:35",
+      "status": "pass",
+      "result": "OK (0.01 с)",
+      "output": "true",
+      "duration": 0.01,
+      "at": "2026-10-12 00:07:15",
       "kind": "auto"
     },
     "B2-3": {
-      "status": "blocked",
-      "result": "venv не створено — виконай Блок 2, крок 3",
-      "output": "",
-      "duration": null,
-      "at": "2026-10-11 23:35:35",
+      "status": "pass",
+      "result": "OK (0.02 с)",
+      "output": "Python 3.12.9",
+      "duration": 0.02,
+      "at": "2026-10-12 00:07:15",
       "kind": "auto"
     },
     "B4-4": {
@@ -31,6 +31,94 @@
       "output": "",
       "duration": null,
       "at": "2026-10-11 23:35:35",
+      "kind": "auto"
+    },
+    "B2-2": {
+      "status": "pass",
+      "result": "OK (0.06 с)",
+      "output": "True",
+      "duration": 0.06,
+      "at": "2026-10-12 00:07:15",
+      "kind": "auto"
+    },
+    "B2-4": {
+      "status": "pass",
+      "result": "OK (0.05 с)",
+      "output": "missing: []",
+      "duration": 0.05,
+      "at": "2026-10-12 00:07:15",
+      "kind": "auto"
+    },
+    "B2-5": {
+      "status": "pass",
+      "result": "OK (0.36 с)",
+      "output": "No broken requirements found.",
+      "duration": 0.36,
+      "at": "2026-10-12 00:07:16",
+      "kind": "auto"
+    },
+    "B2-6": {
+      "status": "pass",
+      "result": "OK (0.05 с)",
+      "output": "missing: []",
+      "duration": 0.05,
+      "at": "2026-10-12 00:07:16",
+      "kind": "auto"
+    },
+    "B2-7": {
+      "status": "pass",
+      "result": "OK (0.05 с)",
+      "output": "missing: []",
+      "duration": 0.05,
+      "at": "2026-10-12 00:07:16",
+      "kind": "auto"
+    },
+    "B2-8": {
+      "status": "pass",
+      "result": "OK (0.06 с)",
+      "output": "True",
+      "duration": 0.06,
+      "at": "2026-10-12 00:07:16",
+      "kind": "auto"
+    },
+    "B2-9": {
+      "status": "pass",
+      "result": "OK (0.19 с)",
+      "output": "high llama3.1:8b",
+      "duration": 0.19,
+      "at": "2026-10-12 00:07:16",
+      "kind": "auto"
+    },
+    "B2-10": {
+      "status": "pass",
+      "result": "OK (0.31 с)",
+      "output": "MiraSpeak",
+      "duration": 0.31,
+      "at": "2026-10-12 00:07:16",
+      "kind": "auto"
+    },
+    "B2-11": {
+      "status": "pass",
+      "result": "OK (0.05 с)",
+      "output": "True",
+      "duration": 0.05,
+      "at": "2026-10-12 00:07:16",
+      "kind": "auto"
+    },
+    "B2-12": {
+      "status": "pass",
+      "result": "OK (0.27 с)",
+      "output": "{\"status\":\"ok\",\"version\":\"0.2.0\",\"llm_provider\":\"ollama\",\"model\":\"llama3.1:8b\",\"profile\":\"high\"}",
+      "duration": 0.27,
+      "at": "2026-10-12 00:07:17",
+      "kind": "auto"
+    },
+    "B2-13": {
+      "status": "pass",
+      "result": "OK (0.03 с)",
+      "output": "Block 2: project scaffold",
+      "duration": 0.03,
+      "at": "2026-10-12 00:07:17",
       "kind": "auto"
     }
   }
