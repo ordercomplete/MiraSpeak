@@ -9,3 +9,9 @@ python -m venv .venv
 python -m pip install -r requirements.txt
 python -m app.main
 # http://127.0.0.1:8000
+
+## AI Stack (Block 3)
+- Ollama + LLM за профілем (high: llama3.1:8b / low 6GB: llama3.2:3b)
+- faster-whisper (STT, cpu/cuda auto; автовідкат на CPU, якщо CUDA-бібліотеки відсутні)
+- edge-tts (TTS EN + UK), Piper — офлайн-опція
+
