@@ -70,7 +70,7 @@ class STTService:
         self._active_device = device
         return model
 
-    def transcribe(self, audio_bytes: bytes, language: str = "en") -> str:
+    def transcribe(self, audio_bytes: bytes, language: str = "auto") -> str:
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
             tmp.write(audio_bytes)
             tmp_path = tmp.name
@@ -87,9 +87,13 @@ class STTService:
             os.unlink(tmp_path)
 
     def _transcribe_once(self, tmp_path: str, language: str) -> str:
+        # language="auto" (або "" / None) → faster-whisper сам визначає мову,
+        # тому українська та англійська розпізнаються коректно.
+        # Явне "en"/"uk" — якщо користувач примусово задав мову.
+        lang = None if str(language).lower() in ("auto", "", "none") else language
         segments, _ = self.model.transcribe(
             tmp_path,
-            language=language,
+            language=lang,
             beam_size=5,
             vad_filter=True,
         )

@@ -24,6 +24,9 @@
   #mic.rec { background:#e5484d; animation:pulse 1s infinite; }
   @keyframes pulse { 50% { transform:scale(1.08); } }
   #text { flex:1; padding:12px 14px; border-radius:24px; border:1px solid #323848; background:#222633; color:var(--text); font-size:15px; }
+  #vuwrap { width:120px; height:14px; background:#222633; border:1px solid #323848; border-radius:7px; position:relative; overflow:hidden; display:flex; align-items:center; }
+  #vubar { height:100%; width:0%; background:linear-gradient(90deg,#3ddc84,#ffd166,#e5484d); transition:width .08s linear; }
+  #vutxt { position:absolute; right:6px; top:0; line-height:14px; font-size:10px; color:var(--muted); }
 </style>
 </head>
 <body>
@@ -41,6 +44,7 @@
 
 <footer>
   <button id="mic" title="Натисни й говори">🎙</button>
+  <div id="vuwrap" title="Рівень мікрофона"><div id="vubar"></div><span id="vutxt">—</span></div>
   <input id="text" placeholder="Або напиши англійською… (Enter — надіслати)">
   <button id="send">Надіслати</button>
 </footer>
@@ -105,22 +109,68 @@ async function sendText() {
 }
 
 // --- мікрофон ---
+const vubar = document.getElementById('vubar');
+const vutxt = document.getElementById('vutxt');
+let audioCtx = null, meterRaf = null, stopTimer = null;
+
+function setLevel(pct) {
+  vubar.style.width = pct + '%';
+  vutxt.textContent = pct > 3 ? Math.round(pct) + '%' : '—';
+}
+
 micBtn.onclick = async () => {
   if (recorder && recorder.state === 'recording') { recorder.stop(); return; }
   try {
     const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+    const track = stream.getAudioTracks()[0];
+    console.log('mic device:', track.label, '| enabled:', track.enabled);
     chunks = [];
-    recorder = new MediaRecorder(stream, {mimeType: 'audio/webm'});
-    recorder.ondataavailable = e => chunks.push(e.data);
+
+    // --- індикатор рівня мікрофона (щоб видно, чи чує браузер) ---
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const src = audioCtx.createMediaStreamSource(stream);
+    const analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 512;
+    src.connect(analyser);
+    const buf = new Uint8Array(analyser.frequencyBinCount);
+    (function meter() {
+      analyser.getByteTimeDomainData(buf);
+      let peak = 0;
+      for (let i = 0; i < buf.length; i++) peak = Math.max(peak, Math.abs(buf[i] - 128));
+      setLevel(Math.round((peak / 128) * 100));
+      meterRaf = requestAnimationFrame(meter);
+    })();
+
+    recorder = new MediaRecorder(stream);
+    recorder.mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
+    recorder.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
     recorder.onstop = async () => {
       stream.getTracks().forEach(t => t.stop());
       micBtn.classList.remove('rec');
-      await sendAudio(new Blob(chunks, {type: 'audio/webm'}));
+      cancelAnimationFrame(meterRaf); setLevel(0);
+      if (stopTimer) { clearTimeout(stopTimer); stopTimer = null; }
+      micBtn.textContent = '🎙';
+      const blob = new Blob(chunks, {type: 'audio/webm'});
+      console.log('recorded blob:', blob.size, 'bytes');
+      if (blob.size < 500) { addMsg('err', 'Мікрофон не записав звук. Перевір дозвіл і пристрій вводу у системі.'); return; }
+      await sendAudio(blob);
     };
     recorder.start();
     micBtn.classList.add('rec');
-    statusEl.textContent = 'Запис… говори';
-  } catch (e) { addMsg('err', 'Немає доступу до мікрофона: ' + e.message); }
+
+    // автозупинка через 6 с + зворотний відлік
+    let left = 6;
+    micBtn.textContent = left + 'с';
+    stopTimer = setInterval(() => {
+      left--;
+      if (left <= 0) { if (recorder.state === 'recording') recorder.stop(); }
+      else micBtn.textContent = left + 'с';
+    }, 1000);
+    statusEl.textContent = 'Запис… говори (до 6 с, або натисни 🎙 щоб зупинити)';
+  } catch (e) {
+    addMsg('err', 'Немає доступу до мікрофона: ' + e.message + ' (перевір налаштування → Конфіденційність → Мікрофон)');
+    console.error('getUserMedia error:', e);
+  }
 };
 
 async function sendAudio(blob) {
@@ -129,7 +179,7 @@ async function sendAudio(blob) {
   try {
     const fd = new FormData();
     fd.append('audio', blob, 'speech.webm');
-    fd.append('language', 'en');
+    fd.append('language', 'auto');   // авто-визначення мови → розпізнає і українську, і англійську
     fd.append('level', levelEl.value);
     fd.append('scenario', scenarioEl.value);
     const r = await fetch('/api/voice', {method: 'POST', body: fd});

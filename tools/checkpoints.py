@@ -138,6 +138,8 @@ CHECKPOINTS = [
     {"id": "B6-2", "block": 6, "title": "сервер віддає UI на /",
      "kind": "auto", "check": '''{py} -c "import httpx,sys; r=httpx.get('http://127.0.0.1:8000/', timeout=5); print(r.status_code, len(r.text)); sys.exit(0 if r.status_code==200 and 'MiraSpeak' in r.text else 1)"''',
      "requires": "server", "timeout": 30},
+    {"id": "B6-4", "block": 6, "title": "український ввід розпізнається (STT auto, не примусово en)",
+     "kind": "auto", "check": "{py} tools/check_uk_stt.py", "requires": "venv", "timeout": 120},
     {"id": "B6-M1", "block": 6, "title": "ФІЗИЧНИЙ: UI — темна тема, українська, селектор рівнів/сценаріїв",
      "kind": "manual", "criteria": "відкрити http://127.0.0.1:8000; чек-лист Блока 6; вердикт у -r"},
     {"id": "B6-M2", "block": 6, "title": "ФІЗИЧНИЙ: текстовий чат → голосова відповідь + 📌-виправлення",
