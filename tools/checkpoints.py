@@ -102,7 +102,7 @@ CHECKPOINTS = [
      "kind": "auto", "check": '''{py} -c "from app.api.routes import router; paths=sorted({getattr(r,'path','') for r in router.routes}); print(paths); import sys; sys.exit(0 if any('/voice' in p for p in paths) and any('/text' in p for p in paths) else 1)"''',
      "requires": "venv"},
     {"id": "B4-3", "block": 4, "title": "роутер підключено в main.py",
-     "kind": "auto", "check": '''{py} -c "from app.main import app; paths={getattr(r,'path','') for r in app.routes}; print(sorted(paths)); import sys; sys.exit(0 if '/api/voice' in paths else 1)"''',
+     "kind": "auto", "check": '''{py} -c "from app.main import app; paths=set(app.openapi()['paths']); print(sorted(paths)); import sys; sys.exit(0 if '/api/voice' in paths and '/api/text' in paths and '/api/meta' in paths else 1)"''',
      "requires": "venv"},
     {"id": "B4-4", "block": 4, "title": "інтеграційний синтетичний тест /api/text (LLM відповідає з 📌)",
      "kind": "auto", "check": '''{py} -c "import httpx,sys; r=httpx.post('http://127.0.0.1:8000/api/text', json={'message':'Yesterday I go to the school and I seen my friend.','level':'A2'}, timeout=180); print(r.status_code, r.text[:300]); sys.exit(0 if r.status_code==200 and 'reply_text' in r.text else 1)"''',

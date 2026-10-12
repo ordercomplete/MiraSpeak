@@ -7,6 +7,9 @@ app = FastAPI(title="MiraSpeak", version="0.2.0")
 
 app.mount("/static", StaticFiles(directory=settings.base_dir / "static"), name="static")
 
+from app.api.routes import router as api_router
+app.include_router(api_router)
+
 @app.get("/")
 async def root():
     return FileResponse(settings.base_dir / "static" / "index.html")

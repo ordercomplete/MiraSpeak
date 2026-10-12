@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-12 21:52:02",
+  "updated": "2026-10-12 22:04:04",
   "results": {
     "B2-1": {
       "status": "pass",
@@ -18,11 +18,11 @@
       "kind": "auto"
     },
     "B4-4": {
-      "status": "blocked",
-      "result": "venv не створено — виконай Блок 2, крок 3",
-      "output": "",
-      "duration": null,
-      "at": "2026-10-11 23:35:35",
+      "status": "pass",
+      "result": "OK (24.02 с)",
+      "output": "200 {\"reply_text\":\"That's nice! What's your friend's name? Do you like to see him at school?\",\"reply_spoken\":\"That's nice! What's your friend's name? Do you like to see him at school?\",\"correction\":\"\",\"audio_b64\":\"//NkxAAAAANIAAAAAExBTUVVVVUgNkBhRi0+5CI54DWYg2dyabEEKiIezEOYQy4ldyQg4GBsAF+7xC30RC66JXd3BC",
+      "duration": 24.02,
+      "at": "2026-10-12 22:04:04",
       "kind": "auto"
     },
     "B8-3": {
@@ -231,6 +231,30 @@
       "output": "TEXT: 'Hello, I am Mira'\nDEVICE: cuda\nSTT OK",
       "duration": 1.7,
       "at": "2026-10-12 21:52:02",
+      "kind": "auto"
+    },
+    "B4-1": {
+      "status": "pass",
+      "result": "OK (0.72 с)",
+      "output": "pipeline ok",
+      "duration": 0.72,
+      "at": "2026-10-12 22:00:38",
+      "kind": "auto"
+    },
+    "B4-2": {
+      "status": "pass",
+      "result": "OK (0.89 с)",
+      "output": "['/api/meta', '/api/text', '/api/voice', '/api/voice/sample']",
+      "duration": 0.89,
+      "at": "2026-10-12 22:00:39",
+      "kind": "auto"
+    },
+    "B4-3": {
+      "status": "pass",
+      "result": "OK (1.16 с)",
+      "output": "['/', '/api/health', '/api/meta', '/api/text', '/api/voice', '/api/voice/sample']",
+      "duration": 1.16,
+      "at": "2026-10-12 22:02:53",
       "kind": "auto"
     }
   }

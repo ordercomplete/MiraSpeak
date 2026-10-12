@@ -1,36 +1,35 @@
 # MiraSpeak — статус виконання плану
 
-> Автоматично згенеровано `python tools/progress.py report`. Оновлено: 2026-10-12 21:52:02
+> Автоматично згенеровано `python tools/progress.py report`. Оновлено: 2026-10-12 22:04:04
 
 ## Підсумок
 
 | Метрика | Значення |
 |---|---|
-| **Загальний прогрес** | **27/63 (43%)** ██████░░░░░░░░ |
-| Синтетичні тести (auto) | 27/52 |
+| **Загальний прогрес** | **31/63 (49%)** ███████░░░░░░░ |
+| Синтетичні тести (auto) | 31/52 |
 | Фізичні тести користувача (manual) | 0/11 |
-| Статуси | ✅ 27 · ❌ 0 · ⛔ 2 · ⏳ 34 |
+| Статуси | ✅ 31 · ❌ 0 · ⛔ 1 · ⏳ 31 |
 | Опційні (не впливають на %) | 3 |
 
 ## ⛔ Заблоковані (немає передумов)
 
 | ID | Крок | Причина |
 |---|---|---|
-| B4-4 | інтеграційний синтетичний тест /api/text (LLM відповідає з 📌) | venv не створено — виконай Блок 2, крок 3 |
 | B8-3 | pytest — усі тести зелені (синтетичний) | venv не створено — виконай Блок 2, крок 3 |
 
 ## ⏳ Далі виконувати
 
 1. `B3-M1` [**ФІЗ**] ФІЗИЧНИЙ: прослухати голос Mira EN і UK (жіночий, природність, вимова)
-2. `B4-1` [синт] app/services/pipeline.py (оркестратор)
-3. `B4-2` [синт] app/api/routes.py (ендпоінти /voice /text /meta)
-4. `B4-3` [синт] роутер підключено в main.py
-5. `B4-M1` [**ФІЗ**] ФІЗИЧНИЙ: /api/voice/sample відтворює вітання Mira у браузері
-6. `B4-5` [синт] git commit «Block 4»
-7. `B5-1` [синт] app/services/prompt.py (CEFR + SCENARIOS)
-8. `B5-2` [синт] ендпоінт /api/meta віддає рівні та сценарії
-9. `B5-3` [синт] синтетичний тест промпта (A2/shopping)
-10. `B5-4` [синт] синтетичний тест LLM-формату (відповідь містить 📌)
+2. `B4-M1` [**ФІЗ**] ФІЗИЧНИЙ: /api/voice/sample відтворює вітання Mira у браузері
+3. `B4-5` [синт] git commit «Block 4»
+4. `B5-1` [синт] app/services/prompt.py (CEFR + SCENARIOS)
+5. `B5-2` [синт] ендпоінт /api/meta віддає рівні та сценарії
+6. `B5-3` [синт] синтетичний тест промпта (A2/shopping)
+7. `B5-4` [синт] синтетичний тест LLM-формату (відповідь містить 📌)
+8. `B5-M1` [**ФІЗ**] ФІЗИЧНИЙ: білінгвальність на слух — «поясни» → відповідь українською
+9. `B5-M2` [**ФІЗ**] ФІЗИЧНИЙ: рівні CEFR — A1 vs C1 помітно різні за складністю
+10. `B5-5` [синт] git commit «Block 5»
 
 ## Деталізація по блоках
 
@@ -72,14 +71,14 @@
 | `B3-13` | синт | README: розділ AI Stack | ✅ pass | OK (0.05 с) | 2026-10-12 01:14:37 |
 | `B3-14` | синт | git commit «Block 3» | ✅ pass | OK (0.03 с) | 2026-10-12 01:14:50 |
 
-### Блок 4 — Голосовий пайплайн STT → LLM → TTS  (0/6)
+### Блок 4 — Голосовий пайплайн STT → LLM → TTS  (4/6)
 
 | ID | Тип | Крок | Статус | Результат / вердикт | Коли |
 |---|---|---|---|---|---|
-| `B4-1` | синт | app/services/pipeline.py (оркестратор) | ⏳ pending |  |  |
-| `B4-2` | синт | app/api/routes.py (ендпоінти /voice /text /meta) | ⏳ pending |  |  |
-| `B4-3` | синт | роутер підключено в main.py | ⏳ pending |  |  |
-| `B4-4` | синт | інтеграційний синтетичний тест /api/text (LLM відповідає з 📌) | ⛔ blocked | venv не створено — виконай Блок 2, крок 3 | 2026-10-11 23:35:35 |
+| `B4-1` | синт | app/services/pipeline.py (оркестратор) | ✅ pass | OK (0.72 с) | 2026-10-12 22:00:38 |
+| `B4-2` | синт | app/api/routes.py (ендпоінти /voice /text /meta) | ✅ pass | OK (0.89 с) | 2026-10-12 22:00:39 |
+| `B4-3` | синт | роутер підключено в main.py | ✅ pass | OK (1.16 с) | 2026-10-12 22:02:53 |
+| `B4-4` | синт | інтеграційний синтетичний тест /api/text (LLM відповідає з 📌) | ✅ pass | OK (24.02 с) | 2026-10-12 22:04:04 |
 | `B4-M1` | ФІЗ | ФІЗИЧНИЙ: /api/voice/sample відтворює вітання Mira у браузері | ⏳ pending |  |  |
 | `B4-5` | синт | git commit «Block 4» | ⏳ pending |  |  |
 
@@ -325,5 +324,33 @@ True
 
 ```
 Block 3: AI stack (STT/LLM/TTS)
+```
+</details>
+
+<details><summary><code>B4-1</code> — app/services/pipeline.py (оркестратор) (✅)</summary>
+
+```
+pipeline ok
+```
+</details>
+
+<details><summary><code>B4-2</code> — app/api/routes.py (ендпоінти /voice /text /meta) (✅)</summary>
+
+```
+['/api/meta', '/api/text', '/api/voice', '/api/voice/sample']
+```
+</details>
+
+<details><summary><code>B4-3</code> — роутер підключено в main.py (✅)</summary>
+
+```
+['/', '/api/health', '/api/meta', '/api/text', '/api/voice', '/api/voice/sample']
+```
+</details>
+
+<details><summary><code>B4-4</code> — інтеграційний синтетичний тест /api/text (LLM відповідає з 📌) (✅)</summary>
+
+```
+200 {"reply_text":"That's nice! What's your friend's name? Do you like to see him at school?","reply_spoken":"That's nice! What's your friend's name? Do you like to see him at school?","correction":"","audio_b64":"//NkxAAAAANIAAAAAExBTUVVVVUgNkBhRi0+5CI54DWYg2dyabEEKiIezEOYQy4ldyQg4GBsAF+7xC30RC66JXd3BC
 ```
 </details>
