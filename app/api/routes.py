@@ -22,7 +22,7 @@ class TextTurnRequest(BaseModel):
 @router.post("/voice")
 async def voice_turn(
     audio: UploadFile = File(...),
-    language: str = Form("en"),
+    language: str = Form("auto"),
     level: str = Form("B1"),
     scenario: str = Form("free talk"),
     session_id: int = Form(0),
@@ -52,10 +52,11 @@ async def text_turn(req: TextTurnRequest):
     """Текстовий цикл (без мікрофона) — для тестів і швидкого чату."""
     import asyncio
     from app.services import llm_service, tts_service
-    from app.services.prompt import build_system_prompt
+    from app.services.prompt import build_system_prompt, language_directive
 
     messages = [{"role": "system", "content": build_system_prompt(req.level, req.scenario)}]
     messages.extend(req.history)
+    messages.append({"role": "system", "content": language_directive(req.message)})
     messages.append({"role": "user", "content": req.message})
     try:
         reply = await llm_service.chat(messages)
@@ -65,7 +66,7 @@ async def text_turn(req: TextTurnRequest):
     audio = b""
     if spoken:
         try:
-            audio = await tts_service.synthesize(spoken, "en")
+            audio = await tts_service.synthesize(spoken, tts_service.detect_language(spoken))
         except Exception:
             pass
     if req.session_id:

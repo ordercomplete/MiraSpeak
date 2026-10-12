@@ -1,7 +1,7 @@
 import asyncio
 
 from app.services import llm_service, stt_service, tts_service
-from app.services.prompt import build_system_prompt
+from app.services.prompt import build_system_prompt, language_directive
 
 
 class PipelineService:
@@ -23,21 +23,23 @@ class PipelineService:
         if not transcript:
             return {"ok": False, "error": "empty_transcript"}
 
-        # 2) LLM
+        # 2) LLM — детермінована директива мови інжектиться перед повідомленням
         messages = [{"role": "system", "content": build_system_prompt(level, scenario)}]
         messages.extend(history or [])
+        messages.append({"role": "system", "content": language_directive(transcript)})
         messages.append({"role": "user", "content": transcript})
         try:
             reply = await llm_service.chat(messages)
         except Exception as e:
             return {"ok": False, "error": f"llm_error: {e}", "transcript": transcript}
 
-        # 3) TTS — озвучуємо лише англійську частину відповіді (частину з 📌 не озвучуємо)
+        # 3) TTS — озвучуємо лише англійську/українську частину відповіді (📌 не озвучуємо)
         spoken_part, correction_part = self._split_reply(reply)
         audio_out = b""
         if spoken_part:
+            tts_lang = tts_service.detect_language(spoken_part)
             try:
-                audio_out = await tts_service.synthesize(spoken_part, "en")
+                audio_out = await tts_service.synthesize(spoken_part, tts_lang)
             except Exception:
                 audio_out = b""  # немає мережі → показуємо текст без голосу
 
