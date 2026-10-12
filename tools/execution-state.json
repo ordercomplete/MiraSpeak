@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-12 22:04:04",
+  "updated": "2026-10-12 22:05:46",
   "results": {
     "B2-1": {
       "status": "pass",
@@ -255,6 +255,14 @@
       "output": "['/', '/api/health', '/api/meta', '/api/text', '/api/voice', '/api/voice/sample']",
       "duration": 1.16,
       "at": "2026-10-12 22:02:53",
+      "kind": "auto"
+    },
+    "B4-5": {
+      "status": "pass",
+      "result": "OK (0.05 с)",
+      "output": "Block 4: voice pipeline API (STT->LLM->TTS orchestrator + REST endpoints)",
+      "duration": 0.05,
+      "at": "2026-10-12 22:05:46",
       "kind": "auto"
     }
   }
