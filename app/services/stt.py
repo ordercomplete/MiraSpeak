@@ -3,6 +3,7 @@ import os
 import tempfile
 
 from faster_whisper import WhisperModel
+from faster_whisper.vad import VadOptions
 from app.core.config import settings
 
 
@@ -63,7 +64,7 @@ class STTService:
     def _build_model(self, device: str) -> WhisperModel:
         compute = self._resolve_compute_type(device)
         model = WhisperModel(
-            settings.whisper_model,
+            settings.resolved_whisper_model,
             device=device,
             compute_type=compute,
         )
@@ -91,11 +92,24 @@ class STTService:
         # тому українська та англійська розпізнаються коректно.
         # Явне "en"/"uk" — якщо користувач примусово задав мову.
         lang = None if str(language).lower() in ("auto", "", "none") else language
+        # VadOptions тюнінг: швидше визначаємо кінець фрази (коротка пауза),
+        # трохи чутливіший поріг для тихого мікрофона.
+        vad = VadOptions(
+            threshold=0.45,
+            min_speech_duration_ms=250,
+            min_silence_duration_ms=max(200, settings.stt_min_silence_ms),
+            speech_pad_ms=300,
+        )
         segments, _ = self.model.transcribe(
             tmp_path,
             language=lang,
             beam_size=5,
             vad_filter=True,
+            vad_parameters=vad,
+            # initial_prompt дає Whisper контекст/лексику (кирилиця, імена) → краще укр.
+            initial_prompt=settings.stt_initial_prompt or None,
+            # Не тяжіємо до попереднього тексту — менше «зациклень» і галюцинацій.
+            condition_on_previous_text=False,
         )
         return " ".join(s.text.strip() for s in segments).strip()
 

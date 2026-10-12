@@ -11,6 +11,23 @@ PROFILE_MODELS = {
     "cpu": "qwen2.5:3b",
 }
 
+# Профільні моделі STT (Whisper). Мала модель (base) погано тягне кирилицю —
+# для high/medium беремо small, для слабких машин/6GB — base.
+PROFILE_STT_MODELS = {
+    "high": "small",
+    "medium": "small",
+    "low": "base",
+    "cpu": "base",
+}
+
+# Підказка для Whisper про мову/контекст — покращує розпізнавання української
+# (правильна лексика, цифри, імена). Порожньо = вимкнути.
+STT_INITIAL_PROMPT_UK = (
+    "Розмова українською та англійською. Привіт, як справи? Розкажіть про свій день, "
+    "роботу, подорожі, хобі. Правильні слова: Слава Україні, Київ, подорож, учора, "
+    "сьогодні, завтра. Разом із англійськими фразами: Hello, how are you, yesterday I went."
+)
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=BASE_DIR / ".env", extra="ignore")
 
@@ -23,9 +40,11 @@ class Settings(BaseSettings):
     openai_base_url: str = ""             # напр. http://127.0.0.1:1234/v1 (LM Studio)
     openai_model: str = ""
     # STT
-    whisper_model: str = "base"
+    whisper_model: str = ""                # порожньо => за профілем (PROFILE_STT_MODELS)
     stt_device: str = "auto"              # auto | cpu | cuda
     stt_compute_type: str = "auto"        # auto | int8 | float16
+    stt_initial_prompt: str = STT_INITIAL_PROMPT_UK   # контекст для кращого розпізнавання укр/англ
+    stt_min_silence_ms: int = 500         # мін. пауза (мс), що вважається кінцем фрази (server-side VAD)
     # TTS
     tts_provider: str = "edge"            # edge | piper
     tts_voice_en: str = "en-US-AriaNeural"
@@ -43,5 +62,11 @@ class Settings(BaseSettings):
         if self.ollama_model:
             return self.ollama_model
         return PROFILE_MODELS.get(self.model_profile, PROFILE_MODELS["high"])
+
+    @property
+    def resolved_whisper_model(self) -> str:
+        if self.whisper_model:
+            return self.whisper_model
+        return PROFILE_STT_MODELS.get(self.model_profile, PROFILE_STT_MODELS["high"])
 
 settings = Settings()

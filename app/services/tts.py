@@ -18,6 +18,15 @@ class TTSService:
     def _voice(self, language: str) -> str:
         return settings.tts_voice_en if language.startswith("en") else settings.tts_voice_uk
 
+    @staticmethod
+    def detect_language(text: str) -> str:
+        """Автовизначення мови озвучування: якщо в тексті переважає кирилиця →
+        українська, інакше англійська. Щоб Mira озвучувала українську відповідь
+        українським голосом, а англійську — англійським."""
+        cyr = sum(1 for ch in text if "\u0400" <= ch <= "\u04FF")
+        lat = sum(1 for ch in text if ch.isascii() and ch.isalpha())
+        return "uk" if cyr > lat else "en"
+
     async def synthesize(self, text: str, language: str = "en") -> bytes:
         key = hashlib.sha1(f"{language}|{text}".encode()).hexdigest()
         cache_file = self._cache_dir / f"{key}.mp3"

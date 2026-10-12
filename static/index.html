@@ -108,10 +108,14 @@ async function sendText() {
   }
 }
 
-// --- мікрофон ---
+// --- мікрофон: VAD на паузі тиші (авто-стоп) + ручний стоп кнопкою ---
 const vubar = document.getElementById('vubar');
 const vutxt = document.getElementById('vutxt');
-let audioCtx = null, meterRaf = null, stopTimer = null;
+const SILENCE_MS = 1600;   // пауза тиші => вважаємо фразу завершеною
+const MIN_SPEECH_MS = 400; // мін. тривалість мовлення (щоб не ловити самий клік/шум)
+const MAX_REC_MS = 20000;  // страховочний максимум довжини запису
+const SPEECH_THR = 6;      // % рівня мікрофона, вище якого вважаємо за «звук»
+let audioCtx = null, meterRaf = null, maxTimer = null;
 
 function setLevel(pct) {
   vubar.style.width = pct + '%';
@@ -119,6 +123,7 @@ function setLevel(pct) {
 }
 
 micBtn.onclick = async () => {
+  // ручний стоп: якщо вже пишемо — зупиняємо
   if (recorder && recorder.state === 'recording') { recorder.stop(); return; }
   try {
     const stream = await navigator.mediaDevices.getUserMedia({audio: true});
@@ -126,18 +131,27 @@ micBtn.onclick = async () => {
     console.log('mic device:', track.label, '| enabled:', track.enabled);
     chunks = [];
 
-    // --- індикатор рівня мікрофона (щоб видно, чи чує браузер) ---
+    // --- індикатор рівня + детектор паузи тиші (VAD) ---
     audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
     const src = audioCtx.createMediaStreamSource(stream);
     const analyser = audioCtx.createAnalyser();
     analyser.fftSize = 512;
     src.connect(analyser);
     const buf = new Uint8Array(analyser.frequencyBinCount);
+    let spokeMs = 0, silenceMs = 0, started = false;
     (function meter() {
       analyser.getByteTimeDomainData(buf);
       let peak = 0;
       for (let i = 0; i < buf.length; i++) peak = Math.max(peak, Math.abs(buf[i] - 128));
-      setLevel(Math.round((peak / 128) * 100));
+      const pct = Math.round((peak / 128) * 100);
+      setLevel(pct);
+      if (pct >= SPEECH_THR) { spokeMs += 16; silenceMs = 0; } else { silenceMs += 16; }
+      if (!started && spokeMs >= MIN_SPEECH_MS) started = true;   // почули хоч трохи мовлення
+      if (started && silenceMs >= SILENCE_MS && recorder && recorder.state === 'recording') {
+        console.log('auto-stop: silence after speech');
+        recorder.stop();
+        return;
+      }
       meterRaf = requestAnimationFrame(meter);
     })();
 
@@ -148,7 +162,7 @@ micBtn.onclick = async () => {
       stream.getTracks().forEach(t => t.stop());
       micBtn.classList.remove('rec');
       cancelAnimationFrame(meterRaf); setLevel(0);
-      if (stopTimer) { clearTimeout(stopTimer); stopTimer = null; }
+      if (maxTimer) { clearTimeout(maxTimer); maxTimer = null; }
       micBtn.textContent = '🎙';
       const blob = new Blob(chunks, {type: 'audio/webm'});
       console.log('recorded blob:', blob.size, 'bytes');
@@ -157,16 +171,12 @@ micBtn.onclick = async () => {
     };
     recorder.start();
     micBtn.classList.add('rec');
-
-    // автозупинка через 6 с + зворотний відлік
-    let left = 6;
-    micBtn.textContent = left + 'с';
-    stopTimer = setInterval(() => {
-      left--;
-      if (left <= 0) { if (recorder.state === 'recording') recorder.stop(); }
-      else micBtn.textContent = left + 'с';
-    }, 1000);
-    statusEl.textContent = 'Запис… говори (до 6 с, або натисни 🎙 щоб зупинити)';
+    micBtn.textContent = '⏹';
+    statusEl.textContent = 'Запис… говори (авто-стоп після паузи, або натисни ⏹)';
+    // страховочний максимум, щоб запис не висів нескінченно
+    maxTimer = setTimeout(() => {
+      if (recorder && recorder.state === 'recording') { console.log('auto-stop: max time'); recorder.stop(); }
+    }, MAX_REC_MS);
   } catch (e) {
     addMsg('err', 'Немає доступу до мікрофона: ' + e.message + ' (перевір налаштування → Конфіденційність → Мікрофон)');
     console.error('getUserMedia error:', e);
