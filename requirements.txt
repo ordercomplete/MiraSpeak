@@ -14,8 +14,10 @@ edge-tts>=6.1.12
 numpy>=1.26.0
 pytest>=8.0.0
 
-# --- Опційно: GPU-прискорення STT (faster-whisper на CUDA) ---
-# faster-whisper/ctranslate2 працюють на CPU і без цього (автовідкат у stt.py).
-# Для швидшого STT на NVIDIA-GPU доставте CUDA-бібліотеку (потрібне стабільне з'єднання):
-# nvidia-cublas-cu12
+# --- GPU-прискорення STT (faster-whisper на CUDA) ---
+# ctranslate2 шукає ці DLL через LoadLibrary по PATH; stt.py додає їх каталоги
+# автоматично при старті (і робить автовідкат на CPU, якщо їх немає/помилка).
+# Версії узгоджені з встановленим PyTorch-free стеком faster-whisper.
+nvidia-cublas-cu12==12.9.2.10
+nvidia-cuda-nvrtc-cu12==12.9.86
 

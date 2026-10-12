@@ -84,6 +84,10 @@ CHECKPOINTS = [
     {"id": "B3-11", "block": 3, "title": "синтетичний TTS-тест (EN+UK → data/test_*.mp3)",
      "kind": "auto", "check": '''{py} -c "import asyncio; from app.services import tts_service; open('data/test_en.mp3','wb').write(asyncio.run(tts_service.synthesize('Hello, I am Mira.','en'))); open('data/test_uk.mp3','wb').write(asyncio.run(tts_service.synthesize('Privit, ya Mira.','uk'))); print('TTS OK')"''',
      "timeout": 90},
+    {"id": "B3-12", "block": 3, "title": "синтетичний STT-тест (розпізнавання аудіо → текст)",
+     "kind": "auto", "check": '''{py} -c "from app.services import stt_service; txt=stt_service.transcribe(open('data/test_en.mp3','rb').read(),'en'); print('TEXT:',repr(txt)); print('DEVICE:',stt_service._active_device); assert len(txt.strip())>0, 'empty transcript'; print('STT OK')"''',
+     "requires": "venv", "timeout": 200},
+
     {"id": "B3-M1", "block": 3, "title": "ФІЗИЧНИЙ: прослухати голос Mira EN і UK (жіночий, природність, вимова)",
      "kind": "manual", "criteria": "data/test_en.mp3 + data/test_uk.mp3; оцінка 1–10 у -r"},
     {"id": "B3-13", "block": 3, "title": "README: розділ AI Stack",
