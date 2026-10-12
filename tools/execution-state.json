@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-13 00:41:46",
+  "updated": "2026-10-13 00:45:27",
   "results": {
     "B2-1": {
       "status": "pass",
@@ -507,18 +507,18 @@
     },
     "B10-1": {
       "status": "pass",
-      "result": "OK (0.78 с)",
+      "result": "OK (0.73 с)",
       "output": "coach prompt ok 1628",
-      "duration": 0.78,
-      "at": "2026-10-13 00:41:07",
+      "duration": 0.73,
+      "at": "2026-10-13 00:45:19",
       "kind": "auto"
     },
     "B10-3": {
       "status": "pass",
-      "result": "OK (0.83 с)",
+      "result": "OK (0.75 с)",
       "output": "drill parse ok 'Nice to meet you'",
-      "duration": 0.83,
-      "at": "2026-10-13 00:41:07",
+      "duration": 0.75,
+      "at": "2026-10-13 00:45:19",
       "kind": "auto"
     },
     "B10-5": {
@@ -526,15 +526,15 @@
       "result": "OK (0.05 с)",
       "output": "missing: []",
       "duration": 0.05,
-      "at": "2026-10-13 00:41:38",
+      "at": "2026-10-13 00:45:19",
       "kind": "auto"
     },
     "B10-2": {
       "status": "pass",
-      "result": "OK (3.67 с)",
+      "result": "OK (3.23 с)",
       "output": "coach turn ok",
-      "duration": 3.67,
-      "at": "2026-10-13 00:41:45",
+      "duration": 3.23,
+      "at": "2026-10-13 00:45:27",
       "kind": "auto"
     },
     "B10-4": {
@@ -542,7 +542,15 @@
       "result": "OK (0.3 с)",
       "output": "tts audio 14976",
       "duration": 0.3,
-      "at": "2026-10-13 00:41:46",
+      "at": "2026-10-13 00:45:27",
+      "kind": "auto"
+    },
+    "B10-6": {
+      "status": "pass",
+      "result": "OK (0.03 с)",
+      "output": "Block 10: hands-free auto-conversation, Ukrainian coach, pronunciation drills, TTS in flashcards",
+      "duration": 0.03,
+      "at": "2026-10-13 00:41:53",
       "kind": "auto"
     }
   }
