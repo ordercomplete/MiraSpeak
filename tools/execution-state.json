@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-13 00:10:10",
+  "updated": "2026-10-13 00:41:46",
   "results": {
     "B2-1": {
       "status": "pass",
@@ -495,6 +495,54 @@
       "output": "status 404",
       "duration": 0.31,
       "at": "2026-10-13 00:08:54",
+      "kind": "auto"
+    },
+    "B9-9": {
+      "status": "pass",
+      "result": "OK (0.03 с)",
+      "output": "Block 9: learning curriculum A1-A2, quiz system, UI Learn tab",
+      "duration": 0.03,
+      "at": "2026-10-13 00:10:19",
+      "kind": "auto"
+    },
+    "B10-1": {
+      "status": "pass",
+      "result": "OK (0.78 с)",
+      "output": "coach prompt ok 1628",
+      "duration": 0.78,
+      "at": "2026-10-13 00:41:07",
+      "kind": "auto"
+    },
+    "B10-3": {
+      "status": "pass",
+      "result": "OK (0.83 с)",
+      "output": "drill parse ok 'Nice to meet you'",
+      "duration": 0.83,
+      "at": "2026-10-13 00:41:07",
+      "kind": "auto"
+    },
+    "B10-5": {
+      "status": "pass",
+      "result": "OK (0.05 с)",
+      "output": "missing: []",
+      "duration": 0.05,
+      "at": "2026-10-13 00:41:38",
+      "kind": "auto"
+    },
+    "B10-2": {
+      "status": "pass",
+      "result": "OK (3.67 с)",
+      "output": "coach turn ok",
+      "duration": 3.67,
+      "at": "2026-10-13 00:41:45",
+      "kind": "auto"
+    },
+    "B10-4": {
+      "status": "pass",
+      "result": "OK (0.3 с)",
+      "output": "tts audio 14976",
+      "duration": 0.3,
+      "at": "2026-10-13 00:41:46",
       "kind": "auto"
     }
   }

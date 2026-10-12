@@ -1,15 +1,15 @@
 # MiraSpeak — статус виконання плану
 
-> Автоматично згенеровано `python tools/progress.py report`. Оновлено: 2026-10-13 00:10:10
+> Автоматично згенеровано `python tools/progress.py report`. Оновлено: 2026-10-13 00:41:46
 
 ## Підсумок
 
 | Метрика | Значення |
 |---|---|
-| **Загальний прогрес** | **61/74 (82%)** ████████████░░ |
-| Синтетичні тести (auto) | 61/62 |
-| Фізичні тести користувача (manual) | 0/12 |
-| Статуси | ✅ 61 · ❌ 0 · ⛔ 0 · ⏳ 13 |
+| **Загальний прогрес** | **67/82 (82%)** ███████████░░░ |
+| Синтетичні тести (auto) | 67/68 |
+| Фізичні тести користувача (manual) | 0/14 |
+| Статуси | ✅ 67 · ❌ 0 · ⛔ 0 · ⏳ 15 |
 | Опційні (не впливають на %) | 3 |
 
 ## ⏳ Далі виконувати
@@ -129,7 +129,7 @@
 | `B8-6` | синт | тег v0.1.0 поставлено | ✅ pass | OK (0.03 с) | 2026-10-12 22:31:59 |
 | `FINAL-M1` | ФІЗ | ФІЗИЧНИЙ: приймальна сесія — 5-хвилинна вільна розмова з Mira | ⏳ pending |  |  |
 
-### Блок 9 — Навчальний план A1–A2 і перевірка знань (quiz, БД-прогрес)  (8/10)
+### Блок 9 — Навчальний план A1–A2 і перевірка знань (quiz, БД-прогрес)  (9/10)
 
 | ID | Тип | Крок | Статус | Результат / вердикт | Коли |
 |---|---|---|---|---|---|
@@ -141,7 +141,7 @@
 | `B9-6` | синт | grade через API зберігає спробу (100% → passed) | ✅ pass | OK (0.89 с) | 2026-10-13 00:08:53 |
 | `B9-7` | синт | GET /api/curriculum/progress → прогрес у БД | ✅ pass | OK (0.28 с) | 2026-10-13 00:08:53 |
 | `B9-8` | синт | невідомий юніт → 404 | ✅ pass | OK (0.31 с) | 2026-10-13 00:08:54 |
-| `B9-9` | синт | git commit «Block 9» | ⏳ pending |  |  |
+| `B9-9` | синт | git commit «Block 9» | ✅ pass | OK (0.03 с) | 2026-10-13 00:10:19 |
 | `B9-M1` | ФІЗ | ФІЗИЧНИЙ: пройти юніт A1 у UI, оцінити перемикач вкладок | ⏳ pending |  |  |
 
 ## Виводи синтетичних тестів
@@ -582,5 +582,47 @@ completed 1
 
 ```
 status 404
+```
+</details>
+
+<details><summary><code>B9-9</code> — git commit «Block 9» (✅)</summary>
+
+```
+Block 9: learning curriculum A1-A2, quiz system, UI Learn tab
+```
+</details>
+
+<details><summary><code>B10-1</code> — build_coach_system_prompt (український коуч + дрили) (✅)</summary>
+
+```
+coach prompt ok 1628
+```
+</details>
+
+<details><summary><code>B10-2</code> — pipeline: coach-режим повертає reply без збою (✅)</summary>
+
+```
+coach turn ok
+```
+</details>
+
+<details><summary><code>B10-3</code> — _split_coach_reply виділяє дрил із «🎯 Repeat: …» (✅)</summary>
+
+```
+drill parse ok 'Nice to meet you'
+```
+</details>
+
+<details><summary><code>B10-4</code> — POST /api/tts озвучує текст лексики (✅)</summary>
+
+```
+tts audio 14976
+```
+</details>
+
+<details><summary><code>B10-5</code> — UI: режим Тьютор/Коуч, hands-free, VAD, 🔊 у картках (✅)</summary>
+
+```
+missing: []
 ```
 </details>

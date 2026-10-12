@@ -14,6 +14,7 @@ router = APIRouter(prefix="/api")
 class TextTurnRequest(BaseModel):
     message: str
     language: str = "en"
+    mode: str = "tutor"
     level: str = "B1"
     scenario: str = "free talk"
     history: list[dict] = []
@@ -24,8 +25,10 @@ class TextTurnRequest(BaseModel):
 async def voice_turn(
     audio: UploadFile = File(...),
     language: str = Form("auto"),
+    mode: str = Form("tutor"),
     level: str = Form("B1"),
     scenario: str = Form("free talk"),
+    drill_target: str = Form(""),
     session_id: int = Form(0),
 ):
     """Голосовий цикл: multipart аудіофайл (webm/wav/mp3) → JSON з відповіддю + base64 mp3."""
@@ -33,11 +36,13 @@ async def voice_turn(
     if not raw:
         raise HTTPException(status_code=400, detail="порожній аудіофайл")
     result = await pipeline_service.voice_turn(
-        raw, language=language, level=level, scenario=scenario
+        raw, language=language, mode=mode, level=level, scenario=scenario,
+        drill_target=drill_target or None,
     )
     if not result.get("ok"):
         raise HTTPException(status_code=422, detail=result.get("error"))
-    audio_bytes = result.pop("audio")
+    audio_bytes = result.pop("audio", b"")
+    drill_audio = result.pop("drill_audio", b"")
     # Збереження ходу в історію сесії (прогрес/аналітика)
     if session_id:
         db.add_message(session_id, "user", result.get("transcript", ""))
@@ -45,35 +50,28 @@ async def voice_turn(
     return {
         **result,
         "audio_b64": _b64(audio_bytes),
+        "drill_audio_b64": _b64(drill_audio),
     }
 
 
 @router.post("/text")
 async def text_turn(req: TextTurnRequest):
     """Текстовий цикл (без мікрофона) — для тестів і швидкого чату."""
-    import asyncio
-    from app.services import llm_service, tts_service
-    from app.services.prompt import build_system_prompt, language_directive
-
-    messages = [{"role": "system", "content": build_system_prompt(req.level, req.scenario)}]
-    messages.extend(req.history)
-    messages.append({"role": "system", "content": language_directive(req.message)})
-    messages.append({"role": "user", "content": req.message})
-    try:
-        reply = await llm_service.chat(messages)
-    except Exception as e:
-        raise HTTPException(status_code=502, detail=f"llm_error: {e}")
-    spoken, correction = pipeline_service._split_reply(reply)
-    audio = b""
-    if spoken:
-        try:
-            audio = await tts_service.synthesize(spoken, tts_service.detect_language(spoken))
-        except Exception:
-            pass
+    result = await pipeline_service.text_turn(
+        req.message, mode=req.mode, level=req.level, scenario=req.scenario, history=req.history
+    )
+    if not result.get("ok"):
+        raise HTTPException(status_code=502, detail=result.get("error"))
+    audio = result.pop("audio", b"")
+    drill_audio = result.pop("drill_audio", b"")
     if req.session_id:
         db.add_message(req.session_id, "user", req.message)
-        db.add_message(req.session_id, "assistant", reply, correction)
-    return {"reply_text": reply, "reply_spoken": spoken, "correction": correction, "audio_b64": _b64(audio)}
+        db.add_message(req.session_id, "assistant", result.get("reply_text", ""), result.get("correction", ""))
+    return {
+        **result,
+        "audio_b64": _b64(audio),
+        "drill_audio_b64": _b64(drill_audio),
+    }
 
 
 @router.get("/voice/sample")
@@ -82,6 +80,27 @@ async def voice_sample():
     from app.services import tts_service
     audio = await tts_service.synthesize("Hi! I'm Mira, your English tutor. Let's talk!", "en")
     return Response(content=audio, media_type="audio/mpeg")
+
+
+class TtsRequest(BaseModel):
+    text: str
+    lang: str = "en"
+
+
+@router.post("/tts")
+async def tts(req: TtsRequest):
+    """Озвучити довільний текст (лексика/фрази у картках навчання)."""
+    from app.services import tts_service
+    text = (req.text or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="порожній текст")
+    try:
+        audio = await tts_service.synthesize(text, req.lang)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"tts_error: {e}")
+    if not audio:
+        raise HTTPException(status_code=502, detail="tts_unavailable")
+    return {"audio_b64": _b64(audio)}
 
 
 @router.get("/meta")

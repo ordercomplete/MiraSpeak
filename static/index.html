@@ -63,6 +63,20 @@
   .qbox input[type=text] { width:100%; padding:10px 12px; border-radius:8px; border:1px solid #323848; background:#222633; color:var(--text); font-size:14px; }
   .res-ok { color:var(--ok); } .res-bad { color:#ff8080; }
   .explain { font-size:13px; color:var(--muted); margin-top:8px; padding:8px 10px; background:#1a1e26; border-radius:8px; }
+  .drill { align-self:flex-start; background:#1d2740; color:#cfe0ff; font-size:15px; border-left:3px solid var(--accent); }
+  .drill .en { font-weight:600; font-size:16px; }
+  .drill .uk { color:var(--muted); font-size:13px; margin-top:4px; }
+  .drill .acts { margin-top:8px; display:flex; gap:8px; }
+  .drill .acts button { background:#2b3a5c; border-color:#3a4d78; font-size:13px; padding:6px 10px; }
+  .drill button.spk, .drill button.drillrec { background:#2b3a5c; border:1px solid #3a4d78; border-radius:6px; color:#cfe0ff; font-size:13px; padding:4px 10px; margin-left:8px; cursor:pointer; }
+  .drill button.spk:hover, .drill button.drillrec:hover { border-color:var(--accent); }
+  .drill button.busy { opacity:.5; }
+  #handsfree { background:#222633; }
+  #handsfree.on { background:#16301f; color:var(--ok); border-color:var(--ok); }
+  #mic.rec { box-shadow:0 0 0 6px rgba(229,72,77,.18); }
+  .spk { background:#222633; border:1px solid #323848; border-radius:6px; padding:1px 7px; margin-left:8px; font-size:13px; cursor:pointer; }
+  .spk:hover { border-color:var(--accent); }
+  .spk.busy { opacity:.5; }
 </style>
 </head>
 <body>
@@ -77,6 +91,12 @@
     <option>B2</option><option>C1</option><option>C2</option>
   </select></label>
   <label class="chat-only">Сценарій <select id="scenario"></select></label>
+  <label class="chat-only" title="Тьютор — англійською. Коуч — українською + дрили на вимову.">Режим
+    <select id="mode">
+      <option value="tutor" selected>🎓 Тьютор (англ.)</option>
+      <option value="coach">🧑‍🏫 Коуч (укр.)</option>
+    </select></label>
+  <button id="handsfree" class="chat-only" title="Безкнопкова розмова: Mira сама слухає після кожної відповіді">🎧 Hands-Free: OFF</button>
   <span id="status">Завантаження…</span>
 </header>
 
@@ -104,8 +124,37 @@ const levelEl = document.getElementById('level');
 const scenarioEl = document.getElementById('scenario');
 const micBtn = document.getElementById('mic');
 const textEl = document.getElementById('text');
+const modeEl = document.getElementById('mode');
+const handsFreeBtn = document.getElementById('handsfree');
 let history = [];          // [{role, content}] для LLM
 let recorder = null, chunks = [], busy = false;
+let handsFree = false;     // безкнопковий режим: автозапуск мікрофона після відповіді Mira
+let lastAudio = null;      // поточний відтворюваний Audio (щоб знати, коли закінчиться)
+let currentDrill = null;   // останній дрил (англ. фраза), який треба повторити
+let pendingDrill = null;   // якщо запис іде саме для дрилу — передамо фразу в /api/voice
+
+// --- синтез довільного тексту (лексика/фрази у картках, дрили) ---
+let _lastSpk = null;
+async function speakText(text, lang, btn) {
+  if (btn) { btn.classList.add('busy'); btn.disabled = true; }
+  if (_lastSpk) { try { _lastSpk.pause(); } catch (e) {} }
+  try {
+    const r = await fetch('/api/tts', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({text, lang})
+    });
+    if (!r.ok) throw new Error((await r.json()).detail || r.status);
+    const d = await r.json();
+    const a = new Audio('data:audio/mpeg;base64,' + d.audio_b64);
+    _lastSpk = a;
+    a.onended = () => { if (btn) { btn.classList.remove('busy'); btn.disabled = false; } };
+    await a.play().catch(() => {});
+  } catch (e) {
+    addMsg('err', 'Не вдалося озвучити: ' + e.message);
+  } finally {
+    setTimeout(() => { if (btn) { btn.classList.remove('busy'); btn.disabled = false; } }, 300);
+  }
+}
 
 // --- метадані (рівні, сценарії) ---
 fetch('/api/meta').then(r => r.json()).then(m => {
@@ -122,17 +171,69 @@ function addMsg(cls, text) {
   return d;
 }
 
-function playB64(b64) {
-  if (!b64) return;
-  new Audio('data:audio/mpeg;base64,' + b64).play().catch(() => {});
+function playB64(b64, onEnd) {
+  if (!b64) { if (onEnd) onEnd(); return; }
+  const a = new Audio('data:audio/mpeg;base64,' + b64);
+  lastAudio = a;
+  a.onended = () => { if (onEnd) onEnd(); };
+  a.onerror = () => { if (onEnd) onEnd(); };
+  a.play().catch(() => { if (onEnd) onEnd(); });
 }
 
 function handleReply(data, transcript) {
+  const mode = modeEl.value;
   if (transcript) { addMsg('user', transcript); history.push({role:'user', content: transcript}); }
-  addMsg('mira', data.reply_spoken || data.reply_text);
-  history.push({role:'assistant', content: data.reply_text});
+  if (data.reply_spoken || data.reply_text) {
+    addMsg('mira', data.reply_spoken || data.reply_text);
+    history.push({role:'assistant', content: data.reply_text});
+  }
   if (data.correction) addMsg('corr', data.correction);
-  playB64(data.audio_b64);
+
+  // --- ДРИЛ (коуч-режим): кнопка «Повторити за мною» + 🔊 ---
+  if (data.drill && data.drill.en) {
+    currentDrill = data.drill.en;   // запам'ятовуємо, яку фразу просили повторити
+    const d = document.createElement('div');
+    d.className = 'msg drill';
+    const en = document.createElement('div');
+    en.className = 'en'; en.textContent = '🎯 ' + data.drill.en;
+    d.appendChild(en);
+    if (data.drill.uk) {
+      const uk = document.createElement('div');
+      uk.className = 'uk'; uk.textContent = data.drill.uk;
+      d.appendChild(uk);
+    }
+    const acts = document.createElement('div');
+    acts.className = 'acts';
+    const spk = document.createElement('button');
+    spk.className = 'spk'; spk.textContent = '🔊 Послухати'; spk.title = 'Прослухати зразок';
+    spk.setAttribute('data-en', data.drill.en);   // обробляється глобальним делегатором
+    spk.setAttribute('data-lang', 'en');
+    const rec = document.createElement('button');
+    rec.className = 'drillrec'; rec.textContent = '🎙 Повторити'; rec.title = 'Записати свою вимову для оцінки';
+    rec.onclick = () => {
+      if (busy) return;
+      pendingDrill = data.drill.en;   // наступний запис буде «перевіркою» цієї фрази
+      addMsg('err', 'Запиши свою вимову фрази — коуч порівняє зі зразком.');
+      startRec();
+    };
+    acts.appendChild(spk); acts.appendChild(rec);
+    d.appendChild(acts);
+    chatEl.appendChild(d);
+    chatEl.scrollTop = chatEl.scrollHeight;
+  }
+
+  // Озвучення: спершу відповідь Mira, потім (у коуч-режимі) англійський дрил.
+  const after = () => {
+    if (handsFree) {
+      statusEl.textContent = '🎙 Говори… (hands-free)';
+      setTimeout(() => { if (handsFree && !busy) micBtn.click(); }, 350);
+    }
+  };
+  if (data.drill_audio_b64) {
+    playB64(data.audio_b64, () => playB64(data.drill_audio_b64, after));
+  } else {
+    playB64(data.audio_b64, after);
+  }
 }
 async function sendText() {
   const t = textEl.value.trim();
@@ -143,7 +244,8 @@ async function sendText() {
   try {
     const r = await fetch('/api/text', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({message: t, level: levelEl.value, scenario: scenarioEl.value, history: sentHistory})
+      body: JSON.stringify({message: t, level: levelEl.value, scenario: scenarioEl.value,
+                            mode: modeEl.value, history: sentHistory})
     });
     if (!r.ok) throw new Error((await r.json()).detail || r.status);
     const data = await r.json();
@@ -153,7 +255,7 @@ async function sendText() {
   } catch (e) {
     addMsg('err', 'Помилка: ' + e.message);
   } finally {
-    busy = false; statusEl.textContent = 'Готово';
+    busy = false; if (!handsFree) statusEl.textContent = 'Готово';
   }
 }
 
@@ -171,7 +273,8 @@ function setLevel(pct) {
   vutxt.textContent = pct > 3 ? Math.round(pct) + '%' : '—';
 }
 
-micBtn.onclick = async () => {
+async function startRec() {
+  if (busy) return;
   // ручний стоп: якщо вже пишемо — зупиняємо
   if (recorder && recorder.state === 'recording') { recorder.stop(); return; }
   try {
@@ -230,6 +333,21 @@ micBtn.onclick = async () => {
     addMsg('err', 'Немає доступу до мікрофона: ' + e.message + ' (перевір налаштування → Конфіденційність → Мікрофон)');
     console.error('getUserMedia error:', e);
   }
+}
+
+micBtn.onclick = () => startRec();
+
+// --- Hands-free: безкнопкова розмова (автозапуск мікрофона після кожної відповіді Mira) ---
+handsFreeBtn.onclick = () => {
+  handsFree = !handsFree;
+  handsFreeBtn.classList.toggle('on', handsFree);
+  handsFreeBtn.textContent = handsFree ? '🎧 Hands-Free: УВІМК' : '🎧 Hands-Free';
+  if (handsFree) {
+    addMsg('err', 'Hands-Free увімкнено: говори, а після відповіді Mira мікрофон увімкнеться сам.');
+    if (!busy && !(recorder && recorder.state === 'recording')) startRec();
+  } else {
+    statusEl.textContent = 'Готово';
+  }
 };
 
 async function sendAudio(blob) {
@@ -239,20 +357,34 @@ async function sendAudio(blob) {
     const fd = new FormData();
     fd.append('audio', blob, 'speech.webm');
     fd.append('language', 'auto');   // авто-визначення мови → розпізнає і українську, і англійську
+    fd.append('mode', modeEl.value); // tutor | coach
     fd.append('level', levelEl.value);
     fd.append('scenario', scenarioEl.value);
+    if (pendingDrill) { fd.append('drill_target', pendingDrill); pendingDrill = null; } // «перевірка» вимови
     const r = await fetch('/api/voice', {method: 'POST', body: fd});
     if (!r.ok) throw new Error((await r.json()).detail || r.status);
     const data = await r.json();
     handleReply(data, data.transcript);
   } catch (e) {
     addMsg('err', 'Помилка: ' + e.message);
+    if (handsFree) statusEl.textContent = '🎙 Натисни 🎙 або говори (помилка, повтор)';
   } finally {
-    busy = false; statusEl.textContent = 'Готово';
+    busy = false; if (!handsFree) statusEl.textContent = 'Готово';
   }
 }
 
+
 document.getElementById('send').onclick = sendText;
+
+// Делегований 🔊: працює і в чаті (дрили), і в навчальних картках (лексика/фрази).
+// Кнопки в картках перестворюються з innerHTML, тому він створюється на document.
+document.addEventListener('click', e => {
+  const btn = e.target.closest('button.spk');
+  if (!btn) return;
+  const text = btn.getAttribute('data-en');
+  const lang = btn.getAttribute('data-lang') || 'en';
+  if (text) speakText(text, lang, btn);
+});
 // ================= Навчання: план A1–A2, уроки, тести =================
 function showTab(tab) {
   document.body.classList.toggle('learn', tab === 'learn');
@@ -315,10 +447,13 @@ async function openUnit(unitId) {
     const r = await fetch('/api/curriculum/' + unitId);
     if (!r.ok) throw new Error(r.status);
     const u = await r.json();
+    const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const spkBtn = (en, lang) =>
+      '<button class="spk" data-en="' + esc(en) + '" data-lang="' + lang + '" title="Прослухати">🔊</button>';
     const vocab = (u.vocabulary || []).map(v =>
-      '<div class="vocab-row"><span>' + v.en + '</span><span class="u">' + v.uk + '</span></div>').join('');
+      '<div class="vocab-row"><span>' + esc(v.en) + '</span><span class="u">' + esc(v.uk) + '</span>' + spkBtn(v.en, 'en') + '</div>').join('');
     const phrases = (u.phrases || []).map(f =>
-      '<div class="vocab-row"><span>' + f.en + '</span><span class="u">' + f.uk + '</span></div>').join('');
+      '<div class="vocab-row"><span>' + esc(f.en) + '</span><span class="u">' + esc(f.uk) + '</span>' + spkBtn(f.en, 'en') + '</div>').join('');
     const goals = (u.goals_uk || []).map(g => '<li>' + g + '</li>').join('');
     lesson.innerHTML =
       '<button class="backbtn" onclick="loadLearnHome()">← До списку юнітів</button>' +
