@@ -40,6 +40,7 @@ class LLMService:
             "messages": messages,
             "stream": False,
             "options": {"num_ctx": settings.ollama_num_ctx},
+            "think": False,
         }
         async with httpx.AsyncClient(base_url=settings.ollama_base_url, timeout=180.0) as client:
             resp = await client.post("/api/chat", json=payload)

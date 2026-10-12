@@ -168,12 +168,14 @@ class PipelineService:
 
     @staticmethod
     def _split_coach_reply(reply: str) -> tuple[str, str, str]:
-        """Відокремлює рядок «🎯 Repeat: …» від української частини відповіді.
-        Повертає (український_текст, англійська_фраза_дрилу, переклад_дрилу)."""
+        """Відокремлює рядок дрилу («🎯 Repeat: …» або «Repeat: …») від розмовної частини.
+        Повертає (текст_мови_розмови, шматок_дрилу, переклад_дрилу)."""
         spoken_lines, drill_line = [], ""
         for ln in reply.split("\n"):
-            if ln.strip().startswith("🎯"):
-                drill_line = ln.strip()
+            t = ln.strip()
+            low = t.lower()
+            if t.startswith("🎯") or low.startswith("repeat:") or low.startswith("повтори:"):
+                drill_line = t
             else:
                 spoken_lines.append(ln)
         spoken = "\n".join(spoken_lines).strip()
