@@ -95,6 +95,41 @@ def create_session(level: str, scenario: str) -> int:
         return cur.lastrowid
 
 
+def ensure_open_session(level: str, scenario: str) -> int:
+    """Автозбереження чатів: повертає останню відкриту сесію з тим самим
+    рівнем/сценарієм (останні 24 год) або створює нову. Фронту не треба думати
+    про session_id — кожен хід зберігається автоматично."""
+    from datetime import datetime, timedelta, timezone
+
+    cutoff = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat(timespec="seconds")
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT id FROM sessions WHERE level = ? AND scenario = ? "
+            "AND ended_at IS NULL AND started_at >= ? ORDER BY id DESC LIMIT 1",
+            (level, scenario, cutoff),
+        ).fetchone()
+        if row:
+            return row["id"]
+        cur = conn.execute(
+            "INSERT INTO sessions (level, scenario, started_at) VALUES (?, ?, ?)",
+            (level, scenario, _now()),
+        )
+        return cur.lastrowid
+
+
+def recent_sessions(limit: int = 20) -> list[dict]:
+    """Останні чати для екрана історії: id, рівень, сценарій, час, к-сть реплік."""
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT s.id, s.level, s.scenario, s.started_at, s.ended_at, "
+            "COUNT(m.id) AS turns FROM sessions s "
+            "LEFT JOIN messages m ON m.session_id = s.id "
+            "GROUP BY s.id ORDER BY s.id DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
 def add_message(session_id: int, role: str, content: str, correction: str = "") -> None:
     with get_conn() as conn:
         conn.execute(

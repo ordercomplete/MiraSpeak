@@ -100,9 +100,7 @@ class STTService:
             min_silence_duration_ms=max(200, settings.stt_min_silence_ms),
             speech_pad_ms=300,
         )
-        segments, _ = self.model.transcribe(
-            tmp_path,
-            language=lang,
+        kwargs = dict(
             beam_size=5,
             vad_filter=True,
             vad_parameters=vad,
@@ -111,7 +109,16 @@ class STTService:
             # Не тяжіємо до попереднього тексту — менше «зациклень» і галюцинацій.
             condition_on_previous_text=False,
         )
-        return " ".join(s.text.strip() for s in segments).strip()
+        segments, info = self.model.transcribe(tmp_path, language=lang, **kwargs)
+        text = " ".join(s.text.strip() for s in segments).strip()
+        # Захист від плутанини ru/uk: детектор Whisper на коротких фразах часто
+        # помилково каже "ru" для української (спільна кирилиця). Користувач —
+        # україномовний, тому "ru" майже напевно означає українську мову:
+        # другий прохід з примусовим language="uk" дає правильний текст.
+        if lang is None and getattr(info, "language", "") == "ru":
+            segments, _ = self.model.transcribe(tmp_path, language="uk", **kwargs)
+            text = " ".join(s.text.strip() for s in segments).strip()
+        return text
 
 
 stt_service = STTService()

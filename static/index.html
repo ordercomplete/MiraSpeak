@@ -128,6 +128,7 @@ const modeEl = document.getElementById('mode');
 const handsFreeBtn = document.getElementById('handsfree');
 let history = [];          // [{role, content}] для LLM
 let recorder = null, chunks = [], busy = false;
+let sessionId = 0;           // автосесія бекенда: повертається кожним ходом, продовжує чат
 let handsFree = false;     // безкнопковий режим: автозапуск мікрофона після відповіді Mira
 let lastAudio = null;      // поточний відтворюваний Audio (щоб знати, коли закінчиться)
 let currentDrill = null;   // останній дрил (англ. фраза), який треба повторити
@@ -245,10 +246,11 @@ async function sendText() {
     const r = await fetch('/api/text', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({message: t, level: levelEl.value, scenario: scenarioEl.value,
-                            mode: modeEl.value, history: sentHistory})
+                            mode: modeEl.value, history: sentHistory, session_id: sessionId})
     });
     if (!r.ok) throw new Error((await r.json()).detail || r.status);
     const data = await r.json();
+    if (data.session_id) sessionId = data.session_id;   // бекенд завів/продовжив чат
     addMsg('user', t);
     history.push({role:'user', content: t});
     handleReply(data, null);
@@ -361,9 +363,11 @@ async function sendAudio(blob) {
     fd.append('level', levelEl.value);
     fd.append('scenario', scenarioEl.value);
     if (pendingDrill) { fd.append('drill_target', pendingDrill); pendingDrill = null; } // «перевірка» вимови
+    if (sessionId) fd.append('session_id', sessionId);   // продовжити поточний чат
     const r = await fetch('/api/voice', {method: 'POST', body: fd});
     if (!r.ok) throw new Error((await r.json()).detail || r.status);
     const data = await r.json();
+    if (data.session_id) sessionId = data.session_id;
     handleReply(data, data.transcript);
   } catch (e) {
     addMsg('err', 'Помилка: ' + e.message);

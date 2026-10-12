@@ -43,12 +43,15 @@ async def voice_turn(
         raise HTTPException(status_code=422, detail=result.get("error"))
     audio_bytes = result.pop("audio", b"")
     drill_audio = result.pop("drill_audio", b"")
-    # Збереження ходу в історію сесії (прогрес/аналітика)
-    if session_id:
-        db.add_message(session_id, "user", result.get("transcript", ""))
-        db.add_message(session_id, "assistant", result.get("reply_text", ""), result.get("correction", ""))
+    # Автозбереження кожного чату: якщо фронт не передав session_id —
+    # заводимо/перевикористовуємо сесію самі, хід зберігається завжди.
+    db.init_db()
+    sid = session_id or db.ensure_open_session(level, scenario)
+    db.add_message(sid, "user", result.get("transcript", ""))
+    db.add_message(sid, "assistant", result.get("reply_text", ""), result.get("correction", ""))
     return {
         **result,
+        "session_id": sid,
         "audio_b64": _b64(audio_bytes),
         "drill_audio_b64": _b64(drill_audio),
     }
@@ -64,11 +67,13 @@ async def text_turn(req: TextTurnRequest):
         raise HTTPException(status_code=502, detail=result.get("error"))
     audio = result.pop("audio", b"")
     drill_audio = result.pop("drill_audio", b"")
-    if req.session_id:
-        db.add_message(req.session_id, "user", req.message)
-        db.add_message(req.session_id, "assistant", result.get("reply_text", ""), result.get("correction", ""))
+    db.init_db()
+    sid = req.session_id or db.ensure_open_session(req.level, req.scenario)
+    db.add_message(sid, "user", req.message)
+    db.add_message(sid, "assistant", result.get("reply_text", ""), result.get("correction", ""))
     return {
         **result,
+        "session_id": sid,
         "audio_b64": _b64(audio),
         "drill_audio_b64": _b64(drill_audio),
     }
@@ -113,6 +118,20 @@ async def meta():
         "llm_provider": settings.llm_provider,
         "tts_provider": settings.tts_provider,
     }
+
+
+@router.get("/sessions")
+async def list_sessions(limit: int = 20):
+    """Історія чатів: останні сесії з кількістю реплік (для екрана «Історія»)."""
+    db.init_db()
+    return {"sessions": db.recent_sessions(limit)}
+
+
+@router.get("/sessions/{session_id}")
+async def session_messages(session_id: int, limit: int = 100):
+    """Репліки одного чату (для перегляду/продовження історії)."""
+    db.init_db()
+    return {"session_id": session_id, "messages": db.get_history(session_id, limit)}
 
 
 @router.post("/session")
