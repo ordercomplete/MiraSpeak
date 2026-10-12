@@ -37,6 +37,25 @@ CREATE TABLE IF NOT EXISTS progress (
     turns INTEGER DEFAULT 0,     -- кількість ходів
     words_added INTEGER DEFAULT 0
 );
+CREATE TABLE IF NOT EXISTS curriculum_progress (
+    unit_id TEXT PRIMARY KEY,        -- id юніта з curriculum.py
+    level TEXT NOT NULL,             -- A1 | A2
+    status TEXT NOT NULL DEFAULT 'new',  -- new | in_progress | completed
+    best_score INTEGER DEFAULT 0,    -- найкращий % останніх тестів
+    attempts INTEGER DEFAULT 0,      -- скільки разів проходили тест
+    last_attempt_at TEXT,
+    completed_at TEXT
+);
+CREATE TABLE IF NOT EXISTS quiz_attempts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    unit_id TEXT NOT NULL,
+    score_percent INTEGER NOT NULL,
+    correct INTEGER NOT NULL,
+    total INTEGER NOT NULL,
+    passed INTEGER NOT NULL,         -- 0/1
+    details TEXT,                    -- JSON з per_question
+    created_at TEXT NOT NULL
+);
 """
 
 
@@ -170,4 +189,84 @@ def progress_summary() -> dict:
         words = conn.execute("SELECT COUNT(*) AS c FROM words").fetchone()["c"]
         sessions = conn.execute("SELECT COUNT(*) AS c FROM sessions").fetchone()["c"]
     return {"total_turns": turns, "words": words, "sessions": sessions, "streak": streak()}
+
+
+# --- навчальний план: прогрес по юнітах та історія тестів ---
+def record_quiz_attempt(unit_id: str, level: str, result: dict) -> None:
+    """Зберігає результат тесту та оновлює прогрес юніта.
+    result — вивід curriculum.grade_quiz (score_percent, correct, total, passed, per_question)."""
+    import json
+
+    now = _now()
+    percent = int(result.get("score_percent", 0))
+    passed = 1 if result.get("passed") else 0
+    with get_conn() as conn:
+        # історія спроб
+        conn.execute(
+            "INSERT INTO quiz_attempts (unit_id, score_percent, correct, total, passed, details, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (unit_id, percent, int(result.get("correct", 0)), int(result.get("total", 0)),
+             passed, json.dumps(result.get("per_question", []), ensure_ascii=False), now),
+        )
+        # upsert прогресу юніта
+        row = conn.execute(
+            "SELECT attempts, best_score FROM curriculum_progress WHERE unit_id = ?", (unit_id,)
+        ).fetchone()
+        if row:
+            best = max(row["best_score"], percent)
+            attempts = row["attempts"] + 1
+            status = "completed" if passed else "in_progress"
+            conn.execute(
+                "UPDATE curriculum_progress SET level=?, status=?, best_score=?, attempts=?, "
+                "last_attempt_at=?, completed_at=COALESCE(completed_at, ?) WHERE unit_id=?",
+                (level, status, best, attempts, now, now if passed else None, unit_id),
+            )
+        else:
+            conn.execute(
+                "INSERT INTO curriculum_progress (unit_id, level, status, best_score, attempts, "
+                "last_attempt_at, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (unit_id, level, "completed" if passed else "in_progress", percent, 1,
+                 now, now if passed else None),
+            )
+
+
+def curriculum_progress() -> dict:
+    """Прогрес по юнітах + агрегована статистика навчання."""
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT unit_id, level, status, best_score, attempts, last_attempt_at, completed_at "
+            "FROM curriculum_progress"
+        ).fetchall()
+        per_unit = {r["unit_id"]: dict(r) for r in rows}
+        attempts = conn.execute("SELECT COUNT(*) AS c FROM quiz_attempts").fetchone()["c"]
+        completed = conn.execute(
+            "SELECT COUNT(*) AS c FROM curriculum_progress WHERE status='completed'"
+        ).fetchone()["c"]
+        # середній бал по всіх спробах
+        avg = conn.execute("SELECT ROUND(AVG(score_percent)) AS a FROM quiz_attempts").fetchone()["a"]
+    return {
+        "units": per_unit,
+        "attempts": attempts,
+        "units_completed": completed,
+        "avg_score": avg or 0,
+    }
+
+
+def quiz_history(unit_id: str = "", limit: int = 20) -> list[dict]:
+    """Останні результати тестів (за наявності unit_id — лише по юніту)."""
+    with get_conn() as conn:
+        if unit_id:
+            rows = conn.execute(
+                "SELECT id, unit_id, score_percent, correct, total, passed, created_at "
+                "FROM quiz_attempts WHERE unit_id=? ORDER BY id DESC LIMIT ?",
+                (unit_id, limit),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT id, unit_id, score_percent, correct, total, passed, created_at "
+                "FROM quiz_attempts ORDER BY id DESC LIMIT ?",
+                (limit,),
+            ).fetchall()
+    return [dict(r) for r in rows]
+
 

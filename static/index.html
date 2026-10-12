@@ -27,22 +27,71 @@
   #vuwrap { width:120px; height:14px; background:#222633; border:1px solid #323848; border-radius:7px; position:relative; overflow:hidden; display:flex; align-items:center; }
   #vubar { height:100%; width:0%; background:linear-gradient(90deg,#3ddc84,#ffd166,#e5484d); transition:width .08s linear; }
   #vutxt { position:absolute; right:6px; top:0; line-height:14px; font-size:10px; color:var(--muted); }
+  nav.tabs { display:flex; gap:6px; margin-left:8px; }
+  nav.tabs button { background:transparent; border:1px solid transparent; color:var(--muted); padding:6px 12px; border-radius:8px; font-size:14px; }
+  nav.tabs button.active { color:var(--text); background:#222633; border-color:#323848; }
+  body.learn .chat-only { display:none !important; }
+  #learn { flex:1; overflow-y:auto; padding:16px; display:none; }
+  .unit-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:12px; max-width:1000px; margin:0 auto; }
+  .unit-card { background:var(--panel); border:1px solid #232733; border-radius:12px; padding:14px; cursor:pointer; transition:border-color .12s; }
+  .unit-card:hover { border-color:var(--accent); }
+  .unit-card .lv { font-size:11px; color:var(--muted); letter-spacing:.5px; }
+  .unit-card .tt { font-weight:600; margin:5px 0 2px; font-size:15px; }
+  .unit-card .tuk { color:var(--muted); font-size:13px; }
+  .unit-card .meta { margin-top:10px; display:flex; align-items:center; gap:8px; }
+  .badge { display:inline-block; font-size:11px; padding:2px 8px; border-radius:10px; }
+  .badge.ok { background:#16301f; color:var(--ok); }
+  .badge.prog { background:#2e2a16; color:#ffd166; }
+  .badge.new { background:#222633; color:var(--muted); }
+  .stats { max-width:1000px; margin:0 auto 14px; display:flex; gap:10px; flex-wrap:wrap; }
+  .stat { background:var(--panel); border:1px solid #232733; border-radius:10px; padding:10px 14px; font-size:13px; color:var(--muted); }
+  .stat b { color:var(--text); font-size:18px; display:block; }
+  .lesson { max-width:720px; margin:0 auto; }
+  .lesson h2 { margin:0 0 2px; }
+  .lesson .sub { color:var(--muted); font-size:13px; margin-bottom:14px; }
+  .lesson h3 { font-size:14px; color:var(--accent); margin:18px 0 8px; text-transform:uppercase; letter-spacing:.4px; }
+  .lesson .sec { background:var(--panel); border:1px solid #232733; border-radius:10px; padding:12px 14px; margin-bottom:12px; line-height:1.6; }
+  .vlist { margin:0; padding-left:18px; }
+  .vocab-row { display:flex; justify-content:space-between; gap:10px; padding:5px 0; border-bottom:1px solid #1e222c; }
+  .vocab-row:last-child { border-bottom:none; }
+  .vocab-row .u { color:var(--muted); }
+  .backbtn { background:#222633; color:var(--text); border:1px solid #323848; border-radius:8px; padding:7px 12px; font-size:13px; cursor:pointer; margin-bottom:14px; }
+  .qbox { background:var(--panel); border:1px solid #232733; border-radius:10px; padding:14px; margin-bottom:12px; }
+  .qbox .q { font-weight:600; margin-bottom:10px; line-height:1.5; }
+  .qbox label { display:block; padding:8px 10px; border:1px solid #323848; border-radius:8px; margin:6px 0; cursor:pointer; font-size:14px; }
+  .qbox label:hover { border-color:var(--accent); }
+  .qbox input[type=text] { width:100%; padding:10px 12px; border-radius:8px; border:1px solid #323848; background:#222633; color:var(--text); font-size:14px; }
+  .res-ok { color:var(--ok); } .res-bad { color:#ff8080; }
+  .explain { font-size:13px; color:var(--muted); margin-top:8px; padding:8px 10px; background:#1a1e26; border-radius:8px; }
 </style>
 </head>
 <body>
 <header>
   <h1>🗣 MiraSpeak</h1>
-  <label>Рівень <select id="level">
+  <nav class="tabs">
+    <button id="tab-chat" class="active" onclick="showTab('chat')">💬 Чат</button>
+    <button id="tab-learn" onclick="showTab('learn')">📚 Навчання</button>
+  </nav>
+  <label class="chat-only">Рівень <select id="level">
     <option>A1</option><option>A2</option><option selected>B1</option>
     <option>B2</option><option>C1</option><option>C2</option>
   </select></label>
-  <label>Сценарій <select id="scenario"></select></label>
+  <label class="chat-only">Сценарій <select id="scenario"></select></label>
   <span id="status">Завантаження…</span>
 </header>
 
 <div id="chat"></div>
 
-<footer>
+<div id="learn">
+  <div id="learn-home">
+    <div class="stats" id="learn-stats">Завантаження прогресу…</div>
+    <div class="unit-grid" id="unit-grid"></div>
+  </div>
+  <div class="lesson" id="lesson" style="display:none"></div>
+  <div class="lesson" id="quiz" style="display:none"></div>
+</div>
+
+<footer class="chat-only">
   <button id="mic" title="Натисни й говори">🎙</button>
   <div id="vuwrap" title="Рівень мікрофона"><div id="vubar"></div><span id="vutxt">—</span></div>
   <input id="text" placeholder="Або напиши англійською… (Enter — надіслати)">
@@ -204,6 +253,173 @@ async function sendAudio(blob) {
 }
 
 document.getElementById('send').onclick = sendText;
+// ================= Навчання: план A1–A2, уроки, тести =================
+function showTab(tab) {
+  document.body.classList.toggle('learn', tab === 'learn');
+  document.getElementById('chat').style.display = tab === 'chat' ? 'flex' : 'none';
+  document.getElementById('learn').style.display = tab === 'learn' ? 'block' : 'none';
+  document.getElementById('tab-chat').classList.toggle('active', tab === 'chat');
+  document.getElementById('tab-learn').classList.toggle('active', tab === 'learn');
+  if (tab === 'learn') loadLearnHome();
+}
+
+async function loadLearnHome() {
+  document.getElementById('learn-home').style.display = 'block';
+  document.getElementById('lesson').style.display = 'none';
+  document.getElementById('quiz').style.display = 'none';
+  const stats = document.getElementById('learn-stats');
+  const grid = document.getElementById('unit-grid');
+  stats.innerHTML = 'Завантаження прогресу…';
+  try {
+    const r = await fetch('/api/curriculum');
+    if (!r.ok) throw new Error(r.status);
+    const data = await r.json();
+    const p = data.progress || {};
+    stats.innerHTML =
+      '<div class="stat"><b>' + (p.units_completed || 0) + '</b>Юнітів пройдено</div>' +
+      '<div class="stat"><b>' + (p.attempts || 0) + '</b>Спроб тестів</div>' +
+      '<div class="stat"><b>' + (p.avg_score || 0) + '%</b>Середній бал</div>';
+    const perUnit = p.units || {};
+    grid.innerHTML = '';
+    for (const u of data.units) {
+      const pr = perUnit[u.id];
+      let badge, cls;
+      if (pr && pr.status === 'completed') { badge = '✅ ' + pr.best_score + '%'; cls = 'ok'; }
+      else if (pr) { badge = '⏳ ' + pr.best_score + '%'; cls = 'prog'; }
+      else { badge = 'Новий'; cls = 'new'; }
+      const card = document.createElement('div');
+      card.className = 'unit-card';
+      card.innerHTML =
+        '<div class="lv">' + u.level + ' · Юніт ' + u.order + '</div>' +
+        '<div class="tt">' + u.title + '</div>' +
+        '<div class="tuk">' + u.title_uk + '</div>' +
+        '<div class="meta"><span class="badge ' + cls + '">' + badge + '</span>' +
+        '<span class="tuk">📝 ' + u.quiz_count + ' питань</span></div>';
+      card.onclick = () => openUnit(u.id);
+      grid.appendChild(card);
+    }
+  } catch (e) {
+    stats.innerHTML = '<div class="stat">Помилка завантаження: ' + e.message + '</div>';
+  }
+}
+
+async function openUnit(unitId) {
+  const home = document.getElementById('learn-home');
+  const lesson = document.getElementById('lesson');
+  const quiz = document.getElementById('quiz');
+  home.style.display = 'none';
+  quiz.style.display = 'none';
+  lesson.style.display = 'block';
+  lesson.innerHTML = '<p>Завантаження уроку…</p>';
+  try {
+    const r = await fetch('/api/curriculum/' + unitId);
+    if (!r.ok) throw new Error(r.status);
+    const u = await r.json();
+    const vocab = (u.vocabulary || []).map(v =>
+      '<div class="vocab-row"><span>' + v.en + '</span><span class="u">' + v.uk + '</span></div>').join('');
+    const phrases = (u.phrases || []).map(f =>
+      '<div class="vocab-row"><span>' + f.en + '</span><span class="u">' + f.uk + '</span></div>').join('');
+    const goals = (u.goals_uk || []).map(g => '<li>' + g + '</li>').join('');
+    lesson.innerHTML =
+      '<button class="backbtn" onclick="loadLearnHome()">← До списку юнітів</button>' +
+      '<h2>' + u.title + '</h2>' +
+      '<div class="sub">' + u.level + ' · ' + u.title_uk + '</div>' +
+      '<h3>Цілі уроку</h3><div class="sec"><ul class="vlist">' + goals + '</ul></div>' +
+      '<h3>Тема</h3><div class="sec">' + (u.topic_uk || u.topic || '') + '</div>' +
+      '<h3>Граматика</h3><div class="sec">' + (u.grammar_uk || u.grammar || '') + '</div>' +
+      '<h3>Лексика</h3><div class="sec">' + vocab + '</div>' +
+      '<h3>Корисні фрази</h3><div class="sec">' + phrases + '</div>' +
+      '<button class="backbtn" style="margin-top:10px" onclick="startQuiz(\'' + unitId + '\')">📝 Пройти тест →</button>';
+    lesson.scrollTop = 0;
+  } catch (e) {
+    lesson.innerHTML = '<button class="backbtn" onclick="loadLearnHome()">← Назад</button><p class="res-bad">Помилка: ' + e.message + '</p>';
+  }
+}
+
+async function startQuiz(unitId) {
+  const lesson = document.getElementById('lesson');
+  const quiz = document.getElementById('quiz');
+  lesson.style.display = 'none';
+  quiz.style.display = 'block';
+  quiz.innerHTML = '<p>Завантаження тесту…</p>';
+  try {
+    const r = await fetch('/api/curriculum/' + unitId + '/quiz');
+    if (!r.ok) throw new Error(r.status);
+    const data = await r.json();
+    let html = '<button class="backbtn" onclick="openUnit(\'' + unitId + '\')">← До уроку</button>' +
+      '<h2>Тест: ' + data.title_uk + '</h2>' +
+      '<div class="sub">' + data.questions.length + ' питань · прохід від 80%</div>';
+    data.questions.forEach((q, i) => {
+      html += '<div class="qbox" data-qi="' + q.index + '" data-type="' + q.type + '"><div class="q">' + (i + 1) + '. ' + q.q + '</div>';
+      if (q.type === 'mc') {
+        q.options.forEach((opt, oi) => {
+          html += '<label><input type="radio" name="q' + q.index + '" value="' + oi + '"> ' + opt + '</label>';
+        });
+      } else {
+        html += '<input type="text" name="q' + q.index + '" placeholder="Введи відповідь…">';
+      }
+      html += '</div>';
+    });
+    html += '<button class="backbtn" onclick="submitQuiz(\'' + unitId + '\')">✅ Перевірити</button>';
+    quiz.innerHTML = html;
+    quiz.scrollTop = 0;
+  } catch (e) {
+    quiz.innerHTML = '<button class="backbtn" onclick="openUnit(\'' + unitId + '\')">← До уроку</button><p class="res-bad">Помилка: ' + e.message + '</p>';
+  }
+}
+
+async function submitQuiz(unitId) {
+  const quiz = document.getElementById('quiz');
+  const qboxes = quiz.querySelectorAll('.qbox');
+  const answers = [];
+  qboxes.forEach(box => {
+    const qi = parseInt(box.dataset.qi);
+    const type = box.dataset.type;
+    if (type === 'mc') {
+      const checked = box.querySelector('input[type=radio]:checked');
+      answers[qi] = checked ? parseInt(checked.value) : null;
+    } else {
+      const inp = box.querySelector('input[type=text]');
+      answers[qi] = inp ? inp.value.trim() : '';
+    }
+  });
+  try {
+    const r = await fetch('/api/curriculum/' + unitId + '/grade', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({answers})
+    });
+    if (!r.ok) throw new Error((await r.json()).detail || r.status);
+    const res = await r.json();
+    renderQuizResult(res);
+  } catch (e) {
+    quiz.innerHTML = '<p class="res-bad">Помилка: ' + e.message + '</p>';
+  }
+}
+
+function renderQuizResult(res) {
+  const quiz = document.getElementById('quiz');
+  const passCls = res.passed ? 'res-ok' : 'res-bad';
+  const passMsg = res.passed ? '✅ Пройдено!' : '❌ Спробуй ще раз (потрібно 80%)';
+  let html = '<button class="backbtn" onclick="loadLearnHome()">← До списку юнітів</button>' +
+    '<h2>Результат: ' + res.correct + '/' + res.total + '</h2>' +
+    '<div class="sub ' + passCls + '" style="font-size:16px">' + res.score_percent + '% · ' + passMsg + '</div>';
+  res.per_question.forEach((pq, i) => {
+    const mark = pq.correct ? '<span class="res-ok">✔</span>' : '<span class="res-bad">✘</span>';
+    html += '<div class="qbox"><div class="q">' + mark + ' ' + (i + 1) + '. ' + pq.q + '</div>';
+    if (!pq.correct) {
+      let exp = pq.expected, giv = pq.given;
+      if (pq.type === 'mc' && pq.options) { exp = pq.options[pq.expected]; giv = pq.options[pq.given] || '(немає відповіді)'; }
+      html += '<div class="res-bad" style="font-size:13px">Твоя відповідь: ' + giv + ' · Правильно: <b>' + exp + '</b></div>';
+    }
+    if (pq.explain_uk) html += '<div class="explain">💡 ' + pq.explain_uk + '</div>';
+    html += '</div>';
+  });
+  html += '<button class="backbtn" onclick="openUnit(\'' + res.unit_id + '\')">📖 До уроку</button>' +
+    '<button class="backbtn" onclick="startQuiz(\'' + res.unit_id + '\')">🔁 Ще раз</button>';
+  quiz.innerHTML = html;
+  quiz.scrollTop = 0;
+}
+
 textEl.addEventListener('keydown', e => { if (e.key === 'Enter') sendText(); });
 addMsg('mira', "Hi! I'm Mira, your English tutor 🌸 Choose your level and scenario, then press the mic or just type. Якщо треба пояснення українською — напиши «поясни».");
 </script>

@@ -681,3 +681,239 @@ curl -X POST http://127.0.0.1:8000/api/chat/text \
 
 **Кінець Блоку 4.**  
 Повідом: «Блок 4 виконано успішно. Готовий до Блоку 5.»
+
+# Свіжий блок оновлень 23:37 12.10.2026.
+
+**Так, зрозумів.**  
+Ти хочеш, щоб Mira вела **природний інтерактивний діалог** (як я), з вільною підтримкою двох мов (англійська + українська) і відчуттям реального часу.
+
+Нижче — чіткий план реалізації природного діалогу, а потім одразу точні інструкції для **Блоку 5**, куди це входить.
+
+### План реалізації природного діалогу (Bilingual Real-time Conversation)
+
+1. **Пам’ять розмови (Conversation Memory)**  
+   Зберігати історію повідомлень (user + assistant) у сесії. Передавати останні 8–12 повідомлень у кожен запит до LLM, щоб Mira «пам’ятала» контекст.
+
+2. **Розумне визначення мови**  
+   - Якщо користувач говорить/пише українською → Mira спочатку коротко відповідає українською (пояснення), потім продовжує англійською.  
+   - Якщо англійською → повністю англійською + м’які виправлення.  
+   - Можна додати явний параметр `preferred_reply_lang`.
+
+3. **Системний промпт з особистістю**  
+   Mira має бути теплою, терплячою, трохи жартівливою, завжди задавати follow-up питання, щоб діалог не обривався.
+
+4. **Структура відповіді**  
+   Кожна відповідь LLM повинна повертатися у структурованому вигляді (JSON):  
+   - `reply_en` — основна відповідь англійською  
+   - `reply_uk` — короткий переклад/пояснення українською (якщо потрібно)  
+   - `correction` — виправлення помилки (якщо є)  
+   - `follow_up` — питання для продовження
+
+5. **Реальний час (відчуття live)**  
+   - На MVP: швидкий request-response + потокове відтворення аудіо.  
+   - Пізніше (Блок 6–7): WebSocket + streaming токенів від Ollama + потоковий TTS.
+
+6. **Рівень CEFR**  
+   Промпт автоматично підлаштовує складність словника і граматики під вибраний рівень (A1–C1).
+
+---
+
+### Блок 5. Системні промпти, білінгвальна логіка та рівні CEFR  
+(точні інструкції для агента в VSCode без варіацій)
+
+Виконай наступні дії строго по порядку.
+
+**Крок 1.** Активуй середовище:  
+```bash
+source .venv/bin/activate
+```
+
+**Крок 2.** Заміни весь вміст файлу `app/prompts/system.py` на:  
+```python
+SYSTEM_PROMPT = """You are Mira — a warm, patient, slightly playful AI English tutor for Ukrainian speakers.
+Your goal is to help the student practice speaking English naturally through conversation.
+
+Rules:
+1. Always reply primarily in clear, natural English appropriate to the student's CEFR level: {level}.
+2. If the student writes or speaks in Ukrainian, first give a short helpful reply or explanation in Ukrainian, then continue the conversation in English.
+3. When the student makes a grammar or vocabulary mistake, gently correct it in a natural way (do not just list errors). Offer a better version.
+4. Always end your reply with a short follow-up question to keep the conversation going.
+5. Keep replies concise: 1–4 sentences maximum unless the student asks for more.
+6. Be encouraging and friendly. Never sound like a strict teacher.
+
+Current student level: {level}
+Conversation history is provided. Use it to stay consistent and remember previous context.
+"""
+```
+
+**Крок 3.** Онови файл `app/models/schemas.py` — заміни весь вміст на:  
+```python
+from pydantic import BaseModel
+from typing import Optional, List
+
+class Message(BaseModel):
+    role: str
+    content: str
+
+class ChatRequest(BaseModel):
+    text: Optional[str] = None
+    level: str = "A2"
+    history: List[Message] = []
+    preferred_lang: str = "auto"   # auto | en | uk
+
+class ChatResponse(BaseModel):
+    reply: str
+    reply_uk: Optional[str] = None
+    correction: Optional[str] = None
+    follow_up: Optional[str] = None
+    audio_base64: Optional[str] = None
+    user_text: Optional[str] = None
+```
+
+**Крок 4.** Онови файл `app/services/pipeline.py` — заміни весь вміст на:  
+```python
+import base64
+import json
+from typing import List, Optional
+from app.services.stt import stt_service
+from app.services.tts import tts_service
+from app.services.llm import llm_service
+from app.prompts.system import SYSTEM_PROMPT
+from app.models.schemas import Message
+
+class PipelineService:
+    def _build_messages(self, text: str, level: str, history: List[Message]) -> list:
+        system_msg = {
+            "role": "system",
+            "content": SYSTEM_PROMPT.format(level=level)
+        }
+        messages = [system_msg]
+        for msg in history[-10:]:  # останні 10 повідомлень
+            messages.append({"role": msg.role, "content": msg.content})
+        messages.append({"role": "user", "content": text})
+        return messages
+
+    def process_text(
+        self,
+        text: str,
+        level: str = "A2",
+        history: List[Message] = None,
+        preferred_lang: str = "auto"
+    ) -> dict:
+        if history is None:
+            history = []
+
+        messages = self._build_messages(text, level, history)
+        raw_reply = llm_service.chat(messages)
+
+        # Простий парсинг (поки без строгого JSON)
+        reply = raw_reply.strip()
+        reply_uk = None
+        correction = None
+
+        return {
+            "reply": reply,
+            "reply_uk": reply_uk,
+            "correction": correction,
+            "follow_up": None
+        }
+
+    async def process_audio(
+        self,
+        audio_bytes: bytes,
+        level: str = "A2",
+        history: List[Message] = None,
+        language: str = "en",
+        preferred_lang: str = "auto"
+    ) -> dict:
+        text = stt_service.transcribe(audio_bytes, language=language)
+        result = self.process_text(text, level=level, history=history, preferred_lang=preferred_lang)
+
+        audio_data = await tts_service.synthesize(result["reply"], language="en")
+        audio_b64 = base64.b64encode(audio_data).decode("utf-8")
+
+        result["user_text"] = text
+        result["audio_base64"] = audio_b64
+        return result
+
+pipeline_service = PipelineService()
+```
+
+**Крок 5.** Онови файл `app/api/chat.py` — заміни весь вміст на:  
+```python
+from fastapi import APIRouter, UploadFile, File, Form
+from typing import Optional
+import json
+from app.services.pipeline import pipeline_service
+from app.models.schemas import ChatRequest, ChatResponse, Message
+
+router = APIRouter(prefix="/api", tags=["chat"])
+
+@router.post("/chat/text", response_model=ChatResponse)
+async def chat_text(request: ChatRequest):
+    result = pipeline_service.process_text(
+        text=request.text or "",
+        level=request.level,
+        history=request.history,
+        preferred_lang=request.preferred_lang
+    )
+    return ChatResponse(
+        reply=result["reply"],
+        reply_uk=result.get("reply_uk"),
+        correction=result.get("correction"),
+        follow_up=result.get("follow_up")
+    )
+
+@router.post("/chat/audio")
+async def chat_audio(
+    file: UploadFile = File(...),
+    level: str = Form("A2"),
+    history: Optional[str] = Form(None),
+    language: str = Form("en"),
+    preferred_lang: str = Form("auto")
+):
+    audio_bytes = await file.read()
+    hist = []
+    if history:
+        hist = [Message(**m) for m in json.loads(history)]
+
+    result = await pipeline_service.process_audio(
+        audio_bytes=audio_bytes,
+        level=level,
+        history=hist,
+        language=language,
+        preferred_lang=preferred_lang
+    )
+    return {
+        "user_text": result.get("user_text"),
+        "reply": result["reply"],
+        "reply_uk": result.get("reply_uk"),
+        "correction": result.get("correction"),
+        "follow_up": result.get("follow_up"),
+        "audio_base64": result.get("audio_base64")
+    }
+```
+
+**Крок 6.** Перевір текстовий діалог з історією:  
+```bash
+curl -X POST http://127.0.0.1:8000/api/chat/text \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Привіт! Я хочу практикувати англійську",
+    "level": "A2",
+    "history": [],
+    "preferred_lang": "auto"
+  }'
+```
+
+**Крок 7.** Онови `README.md` — додай:  
+```
+## Natural Dialogue (Block 5)
+- Bilingual support (EN + UK)
+- Conversation memory (last 10 messages)
+- CEFR level adaptation
+- Follow-up questions for continuous dialogue
+```
+
+**Кінець Блоку 5.**  
+Повідом: «Блок 5 виконано успішно. Готовий до Блоку 6.»

@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 from app.core import db
 from app.core.config import settings
+from app.services import curriculum
 from app.services.pipeline import pipeline_service
 from app.services.prompt import available_levels, available_scenarios
 
@@ -107,6 +108,62 @@ async def new_session(level: str = Form("B1"), scenario: str = Form("free talk")
 async def progress():
     db.init_db()
     return db.progress_summary()
+
+
+# --- Навчальний план A1–A2 та перевірка знань ---
+class QuizGradeRequest(BaseModel):
+    answers: list = []
+
+
+@router.get("/curriculum")
+async def curriculum_overview():
+    """Список юнітів A1–A2 + прогрес користувача (для екрана «Навчання»)."""
+    db.init_db()
+    overview = curriculum.curriculum_overview()
+    overview["progress"] = db.curriculum_progress()
+    return overview
+
+
+@router.get("/curriculum/progress")
+async def curriculum_progress_endpoint():
+    """Агрегована статистика навчання + історія тестів."""
+    db.init_db()
+    return {
+        "progress": db.curriculum_progress(),
+        "history": db.quiz_history(limit=20),
+    }
+
+
+@router.get("/curriculum/{unit_id}")
+async def curriculum_unit(unit_id: str):
+    """Повний контент юніта (лексика, граматика, фрази, цілі) для вивчення."""
+    unit = curriculum.get_unit(unit_id)
+    if not unit:
+        raise HTTPException(status_code=404, detail="Юніт не знайдено")
+    # Не віддаємо quiz тут — контент і тест розділені.
+    return {k: v for k, v in unit.items() if k != "quiz"}
+
+
+@router.get("/curriculum/{unit_id}/quiz")
+async def curriculum_quiz(unit_id: str):
+    """Питання тесту БЕЗ відповідей."""
+    payload = curriculum.quiz_payload(unit_id)
+    if not payload:
+        raise HTTPException(status_code=404, detail="Юніт не знайдено")
+    return payload
+
+
+@router.post("/curriculum/{unit_id}/grade")
+async def curriculum_grade(unit_id: str, req: QuizGradeRequest):
+    """Перевірити відповіді, зберегти результат у БД, повернути детальний розбір."""
+    unit = curriculum.get_unit(unit_id)
+    if not unit:
+        raise HTTPException(status_code=404, detail="Юніт не знайдено")
+    result = curriculum.grade_quiz(unit_id, req.answers)
+    db.init_db()
+    db.record_quiz_attempt(unit_id, unit["level"], result)
+    return result
+
 
 
 @router.post("/words")

@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-12 22:31:59",
+  "updated": "2026-10-13 00:10:10",
   "results": {
     "B2-1": {
       "status": "pass",
@@ -423,6 +423,78 @@
       "output": "v0.1.0",
       "duration": 0.03,
       "at": "2026-10-12 22:31:59",
+      "kind": "auto"
+    },
+    "B6-4": {
+      "status": "pass",
+      "result": "OK (2.66 с)",
+      "output": "TX: Привіт, я вивчаю англійську мову.\nCYRILLIC_CHARS: 27\nUK STT OK",
+      "duration": 2.66,
+      "at": "2026-10-12 23:11:35",
+      "kind": "auto"
+    },
+    "B9-1": {
+      "status": "pass",
+      "result": "OK (0.72 с)",
+      "output": "units 6 levels ['A1', 'A2']",
+      "duration": 0.72,
+      "at": "2026-10-13 00:08:50",
+      "kind": "auto"
+    },
+    "B9-2": {
+      "status": "pass",
+      "result": "OK (0.75 с)",
+      "output": "ok unit ok",
+      "duration": 0.75,
+      "at": "2026-10-13 00:09:25",
+      "kind": "auto"
+    },
+    "B9-3": {
+      "status": "pass",
+      "result": "OK (0.83 с)",
+      "output": "graded ok bool",
+      "duration": 0.83,
+      "at": "2026-10-13 00:09:26",
+      "kind": "auto"
+    },
+    "B9-4": {
+      "status": "pass",
+      "result": "OK (0.2 с)",
+      "output": "tables ['curriculum_progress', 'quiz_attempts']",
+      "duration": 0.2,
+      "at": "2026-10-13 00:09:49",
+      "kind": "auto"
+    },
+    "B9-5": {
+      "status": "pass",
+      "result": "OK (0.27 с)",
+      "output": "overview units 6",
+      "duration": 0.27,
+      "at": "2026-10-13 00:08:52",
+      "kind": "auto"
+    },
+    "B9-6": {
+      "status": "pass",
+      "result": "OK (0.89 с)",
+      "output": "passed 100",
+      "duration": 0.89,
+      "at": "2026-10-13 00:08:53",
+      "kind": "auto"
+    },
+    "B9-7": {
+      "status": "pass",
+      "result": "OK (0.28 с)",
+      "output": "completed 1",
+      "duration": 0.28,
+      "at": "2026-10-13 00:08:53",
+      "kind": "auto"
+    },
+    "B9-8": {
+      "status": "pass",
+      "result": "OK (0.31 с)",
+      "output": "status 404",
+      "duration": 0.31,
+      "at": "2026-10-13 00:08:54",
       "kind": "auto"
     }
   }
