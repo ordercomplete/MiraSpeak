@@ -1,15 +1,15 @@
 # MiraSpeak — статус виконання плану
 
-> Автоматично згенеровано `python tools/progress.py report`. Оновлено: 2026-10-12 00:07:17
+> Автоматично згенеровано `python tools/progress.py report`. Оновлено: 2026-10-12 21:52:02
 
 ## Підсумок
 
 | Метрика | Значення |
 |---|---|
-| **Загальний прогрес** | **13/62 (21%)** ███░░░░░░░░░░░ |
-| Синтетичні тести (auto) | 13/51 |
+| **Загальний прогрес** | **27/63 (43%)** ██████░░░░░░░░ |
+| Синтетичні тести (auto) | 27/52 |
 | Фізичні тести користувача (manual) | 0/11 |
-| Статуси | ✅ 13 · ❌ 0 · ⛔ 2 · ⏳ 47 |
+| Статуси | ✅ 27 · ❌ 0 · ⛔ 2 · ⏳ 34 |
 | Опційні (не впливають на %) | 3 |
 
 ## ⛔ Заблоковані (немає передумов)
@@ -21,16 +21,16 @@
 
 ## ⏳ Далі виконувати
 
-1. `B3-1` [синт] Ollama встановлено (CLI)
-2. `B3-2` [синт] Ollama API відповідає (11434)
-3. `B3-3` [синт] OLLAMA_MODELS перенесено на D:
-4. `B3-4` [синт] LLM-модель за профілем завантажена
-5. `B3-5` [синт] модель генерує відповідь (generate)
-6. `B3-6` [синт] app/services/stt.py (STTService)
-7. `B3-7` [синт] app/services/tts.py (TTSService)
-8. `B3-8` [синт] app/services/llm.py (LLMService, провайдери)
-9. `B3-9` [синт] усі сервіси разом (services/__init__)
-10. `B3-10` [синт] синтетичний LLM-тест (chat → відповідь)
+1. `B3-M1` [**ФІЗ**] ФІЗИЧНИЙ: прослухати голос Mira EN і UK (жіночий, природність, вимова)
+2. `B4-1` [синт] app/services/pipeline.py (оркестратор)
+3. `B4-2` [синт] app/api/routes.py (ендпоінти /voice /text /meta)
+4. `B4-3` [синт] роутер підключено в main.py
+5. `B4-M1` [**ФІЗ**] ФІЗИЧНИЙ: /api/voice/sample відтворює вітання Mira у браузері
+6. `B4-5` [синт] git commit «Block 4»
+7. `B5-1` [синт] app/services/prompt.py (CEFR + SCENARIOS)
+8. `B5-2` [синт] ендпоінт /api/meta віддає рівні та сценарії
+9. `B5-3` [синт] синтетичний тест промпта (A2/shopping)
+10. `B5-4` [синт] синтетичний тест LLM-формату (відповідь містить 📌)
 
 ## Деталізація по блоках
 
@@ -52,24 +52,25 @@
 | `B2-12` | синт | сервер запускається, /api/health → ok | ✅ pass | OK (0.27 с) | 2026-10-12 00:07:17 |
 | `B2-13` | синт | git commit «Block 2» | ✅ pass | OK (0.03 с) | 2026-10-12 00:07:17 |
 
-### Блок 3 — Налаштування AI-стеку (Ollama + STT + TTS)  (0/14)
+### Блок 3 — Налаштування AI-стеку (Ollama + STT + TTS)  (14/15)
 
 | ID | Тип | Крок | Статус | Результат / вердикт | Коли |
 |---|---|---|---|---|---|
-| `B3-1` | синт | Ollama встановлено (CLI) | ⏳ pending |  |  |
-| `B3-2` | синт | Ollama API відповідає (11434) | ⏳ pending |  |  |
-| `B3-3` | синт | OLLAMA_MODELS перенесено на D: | ⏳ pending |  |  |
-| `B3-4` | синт | LLM-модель за профілем завантажена | ⏳ pending |  |  |
-| `B3-5` | синт | модель генерує відповідь (generate) | ⏳ pending |  |  |
-| `B3-6` | синт | app/services/stt.py (STTService) | ⏳ pending |  |  |
-| `B3-7` | синт | app/services/tts.py (TTSService) | ⏳ pending |  |  |
-| `B3-8` | синт | app/services/llm.py (LLMService, провайдери) | ⏳ pending |  |  |
-| `B3-9` | синт | усі сервіси разом (services/__init__) | ⏳ pending |  |  |
-| `B3-10` | синт | синтетичний LLM-тест (chat → відповідь) | ⏳ pending |  |  |
-| `B3-11` | синт | синтетичний TTS-тест (EN+UK → data/test_*.mp3) | ⏳ pending |  |  |
+| `B3-1` | синт | Ollama встановлено (CLI) | ✅ pass | OK (0.08 с) | 2026-10-12 00:25:01 |
+| `B3-2` | синт | Ollama API відповідає (11434) | ✅ pass | OK (0.28 с) | 2026-10-12 00:25:01 |
+| `B3-3` | синт | OLLAMA_MODELS перенесено на D: | ✅ pass | OK (0.14 с) | 2026-10-12 00:25:02 |
+| `B3-4` | синт | LLM-модель за профілем завантажена | ✅ pass | OK (0.42 с) | 2026-10-12 00:33:24 |
+| `B3-5` | синт | модель генерує відповідь (generate) | ✅ pass | OK (4.45 с) | 2026-10-12 00:33:28 |
+| `B3-6` | синт | app/services/stt.py (STTService) | ✅ pass | OK (0.81 с) | 2026-10-12 00:34:46 |
+| `B3-7` | синт | app/services/tts.py (TTSService) | ✅ pass | OK (0.81 с) | 2026-10-12 00:34:47 |
+| `B3-8` | синт | app/services/llm.py (LLMService, провайдери) | ✅ pass | OK (0.77 с) | 2026-10-12 00:34:47 |
+| `B3-9` | синт | усі сервіси разом (services/__init__) | ✅ pass | OK (0.75 с) | 2026-10-12 00:34:48 |
+| `B3-10` | синт | синтетичний LLM-тест (chat → відповідь) | ✅ pass | OK (4.34 с) | 2026-10-12 00:34:59 |
+| `B3-11` | синт | синтетичний TTS-тест (EN+UK → data/test_*.mp3) | ✅ pass | OK (5.61 с) | 2026-10-12 00:35:05 |
+| `B3-12` | синт | синтетичний STT-тест (розпізнавання аудіо → текст) | ✅ pass | OK (1.7 с) | 2026-10-12 21:52:02 |
 | `B3-M1` | ФІЗ | ФІЗИЧНИЙ: прослухати голос Mira EN і UK (жіночий, природність, вимова) | ⏳ pending |  |  |
-| `B3-13` | синт | README: розділ AI Stack | ⏳ pending |  |  |
-| `B3-14` | синт | git commit «Block 3» | ⏳ pending |  |  |
+| `B3-13` | синт | README: розділ AI Stack | ✅ pass | OK (0.05 с) | 2026-10-12 01:14:37 |
+| `B3-14` | синт | git commit «Block 3» | ✅ pass | OK (0.03 с) | 2026-10-12 01:14:50 |
 
 ### Блок 4 — Голосовий пайплайн STT → LLM → TTS  (0/6)
 
@@ -224,5 +225,105 @@ True
 
 ```
 Block 2: project scaffold
+```
+</details>
+
+<details><summary><code>B3-1</code> — Ollama встановлено (CLI) (✅)</summary>
+
+```
+ollama version is 0.34.4
+```
+</details>
+
+<details><summary><code>B3-2</code> — Ollama API відповідає (11434) (✅)</summary>
+
+```
+{"models":[]}
+```
+</details>
+
+<details><summary><code>B3-3</code> — OLLAMA_MODELS перенесено на D: (✅)</summary>
+
+```
+D:\models\ollama
+```
+</details>
+
+<details><summary><code>B3-4</code> — LLM-модель за профілем завантажена (✅)</summary>
+
+```
+want: llama3.1:8b have: ['llama3.1:8b']
+```
+</details>
+
+<details><summary><code>B3-5</code> — модель генерує відповідь (generate) (✅)</summary>
+
+```
+OK
+```
+</details>
+
+<details><summary><code>B3-6</code> — app/services/stt.py (STTService) (✅)</summary>
+
+```
+stt ok
+```
+</details>
+
+<details><summary><code>B3-7</code> — app/services/tts.py (TTSService) (✅)</summary>
+
+```
+tts ok
+```
+</details>
+
+<details><summary><code>B3-8</code> — app/services/llm.py (LLMService, провайдери) (✅)</summary>
+
+```
+llm ok: ollama
+```
+</details>
+
+<details><summary><code>B3-9</code> — усі сервіси разом (services/__init__) (✅)</summary>
+
+```
+Services OK
+```
+</details>
+
+<details><summary><code>B3-10</code> — синтетичний LLM-тест (chat → відповідь) (✅)</summary>
+
+```
+Hello
+```
+</details>
+
+<details><summary><code>B3-11</code> — синтетичний TTS-тест (EN+UK → data/test_*.mp3) (✅)</summary>
+
+```
+TTS OK
+```
+</details>
+
+<details><summary><code>B3-12</code> — синтетичний STT-тест (розпізнавання аудіо → текст) (✅)</summary>
+
+```
+TEXT: 'Hello, I am Mira'
+DEVICE: cuda
+STT OK
+```
+</details>
+
+<details><summary><code>B3-13</code> — README: розділ AI Stack (✅)</summary>
+
+```
+True
+```
+</details>
+
+<details><summary><code>B3-14</code> — git commit «Block 3» (✅)</summary>
+
+```
+Block 3: AI stack (STT/LLM/TTS)
 ```
 </details>

@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-12 00:07:17",
+  "updated": "2026-10-12 21:52:02",
   "results": {
     "B2-1": {
       "status": "pass",
@@ -119,6 +119,118 @@
       "output": "Block 2: project scaffold",
       "duration": 0.03,
       "at": "2026-10-12 00:07:17",
+      "kind": "auto"
+    },
+    "B3-1": {
+      "status": "pass",
+      "result": "OK (0.08 с)",
+      "output": "ollama version is 0.34.4",
+      "duration": 0.08,
+      "at": "2026-10-12 00:25:01",
+      "kind": "auto"
+    },
+    "B3-2": {
+      "status": "pass",
+      "result": "OK (0.28 с)",
+      "output": "{\"models\":[]}",
+      "duration": 0.28,
+      "at": "2026-10-12 00:25:01",
+      "kind": "auto"
+    },
+    "B3-3": {
+      "status": "pass",
+      "result": "OK (0.14 с)",
+      "output": "D:\\models\\ollama",
+      "duration": 0.14,
+      "at": "2026-10-12 00:25:02",
+      "kind": "auto"
+    },
+    "B3-4": {
+      "status": "pass",
+      "result": "OK (0.42 с)",
+      "output": "want: llama3.1:8b have: ['llama3.1:8b']",
+      "duration": 0.42,
+      "at": "2026-10-12 00:33:24",
+      "kind": "auto"
+    },
+    "B3-5": {
+      "status": "pass",
+      "result": "OK (4.45 с)",
+      "output": "OK",
+      "duration": 4.45,
+      "at": "2026-10-12 00:33:28",
+      "kind": "auto"
+    },
+    "B3-6": {
+      "status": "pass",
+      "result": "OK (0.81 с)",
+      "output": "stt ok",
+      "duration": 0.81,
+      "at": "2026-10-12 00:34:46",
+      "kind": "auto"
+    },
+    "B3-7": {
+      "status": "pass",
+      "result": "OK (0.81 с)",
+      "output": "tts ok",
+      "duration": 0.81,
+      "at": "2026-10-12 00:34:47",
+      "kind": "auto"
+    },
+    "B3-8": {
+      "status": "pass",
+      "result": "OK (0.77 с)",
+      "output": "llm ok: ollama",
+      "duration": 0.77,
+      "at": "2026-10-12 00:34:47",
+      "kind": "auto"
+    },
+    "B3-9": {
+      "status": "pass",
+      "result": "OK (0.75 с)",
+      "output": "Services OK",
+      "duration": 0.75,
+      "at": "2026-10-12 00:34:48",
+      "kind": "auto"
+    },
+    "B3-10": {
+      "status": "pass",
+      "result": "OK (4.34 с)",
+      "output": "Hello",
+      "duration": 4.34,
+      "at": "2026-10-12 00:34:59",
+      "kind": "auto"
+    },
+    "B3-11": {
+      "status": "pass",
+      "result": "OK (5.61 с)",
+      "output": "TTS OK",
+      "duration": 5.61,
+      "at": "2026-10-12 00:35:05",
+      "kind": "auto"
+    },
+    "B3-13": {
+      "status": "pass",
+      "result": "OK (0.05 с)",
+      "output": "True",
+      "duration": 0.05,
+      "at": "2026-10-12 01:14:37",
+      "kind": "auto"
+    },
+    "B3-14": {
+      "status": "pass",
+      "result": "OK (0.03 с)",
+      "output": "Block 3: AI stack (STT/LLM/TTS)",
+      "duration": 0.03,
+      "at": "2026-10-12 01:14:50",
+      "kind": "auto"
+    },
+    "B3-12": {
+      "status": "pass",
+      "result": "OK (1.7 с)",
+      "output": "TEXT: 'Hello, I am Mira'\nDEVICE: cuda\nSTT OK",
+      "duration": 1.7,
+      "at": "2026-10-12 21:52:02",
       "kind": "auto"
     }
   }
