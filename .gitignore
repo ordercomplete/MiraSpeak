@@ -15,6 +15,11 @@ data/*.db
 data/*.mp3
 data/*.wav
 data/tts_cache/
+data/*.log
+_server.*
+_*.err
+_*.out
+_*.pid
 *.onnx
 *.bin
 *.gguf
