@@ -20,7 +20,7 @@ python -m app.main
 ## Профілі продуктивності (`MODEL_PROFILE`)
 | Профіль | VRAM/залізо | LLM | СТТ |
 |---|---|---|---|
-| `high` | ≥ 16 GB (RTX 3090+) | `gemma4:26b` | `small` (cuda) |
+| `high` | ≥ 16 GB (RTX 3090+) | `gemma4:26b` | `large-v3-turbo` (cuda) |
 | `medium` | 8–12 GB | `qwen2.5:7b` | `base` (cuda) |
 | `low` | **6 GB** | `llama3.2:3b` | `base` (cuda/int8) |
 | `cpu` | без відеокарти | `qwen2.5:3b` | `base` (int8) |

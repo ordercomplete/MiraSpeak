@@ -11,11 +11,12 @@ PROFILE_MODELS = {
     "cpu": "qwen2.5:3b",
 }
 
-# Профільні моделі STT (Whisper). Мала модель (base) погано тягне кирилицю —
-# для high/medium беремо small, для слабких машин/6GB — base.
+# Профільні моделі STT (Whisper). large-v3-turbo (809M) ≈ точність large-v3
+# при ~6× швидкості; small лишається для слабких машин/6GB (краще за base,
+# але поміщається). Вага: turbo ~1.6 GB (float16) на GPU1/GPU2.
 PROFILE_STT_MODELS = {
-    "high": "small",
-    "medium": "small",
+    "high": "large-v3-turbo",
+    "medium": "large-v3-turbo",
     "low": "base",
     "cpu": "base",
 }
