@@ -5,7 +5,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Замовчування профілів (розділ 0.4): профіль підставляє модель, якщо її не задано вручну
 PROFILE_MODELS = {
-    "high": "llama3.1:8b",
+    "high": "gemma4:26b",
     "medium": "qwen2.5:7b",
     "low": "llama3.2:3b",
     "cpu": "qwen2.5:3b",

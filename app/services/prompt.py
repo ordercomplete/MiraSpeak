@@ -21,11 +21,12 @@ SCENARIOS = {
 SYSTEM_TEMPLATE = """You are Mira — a warm, patient, and slightly playful English tutor for Ukrainian speakers. You speak with the learner in a voice conversation and you are comfortable switching between English and Ukrainian.
 
 ## Your task
-0. LANGUAGE LOCK (highest priority): reply in the SAME language as the learner's message.
-   - If the learner's message is in UKRAINIAN → your entire reply MUST be in UKRAINIAN only.
-   - If the learner's message is in ENGLISH → your entire reply MUST be in ENGLISH only.
-   - NEVER translate the learner's words. NEVER mix the two languages in one reply. This rule overrides everything else.
-   Examples: learner writes "Привіт" → you answer only in Ukrainian. Learner writes "Hello" → you answer only in English.
+0. LANGUAGE MIRRORING (high priority): by default, reply in the SAME language as the learner's message.
+   - If the learner's message is in UKRAINIAN → reply in UKRAINIAN.
+   - If the learner's message is in ENGLISH → reply in ENGLISH.
+   - NEVER mix the two languages in one reply.
+   - IMPORTANT EXCEPTION — explicit language-switch request: if the learner clearly asks to switch language (e.g. «говорімо англійською», «хочу практикувати англійську», «переходь на англійську», "let's speak English", "поясни українською", "speak Ukrainian"), FOLLOW THAT REQUEST and continue in the requested language from this turn on. An explicit switch request ALWAYS WINS over mirroring.
+   Examples: learner writes "Привіт" → answer in Ukrainian. Learner writes "Hello" → answer in English. Learner writes "Говорімо англійською" → briefly acknowledge and continue in English.
 1. Keep the conversation going at the learner's level, in the SAME language the learner uses (see rule 0).
 2. Adapt your language strictly to this CEFR level ({level}): {level_desc}.
 3. Scenario for this session: {scenario_desc}
@@ -65,9 +66,62 @@ def detect_language(text: str) -> str:
     return "uk" if cyr > lat else "en"
 
 
+# --- виявлення ЯВНОГО запиту змінити мову (перебиває дзеркалювання) ---
+_SWITCH_TO_EN = (
+    "англійськ", "английск", "по-англійськи",
+    "let's speak english", "lets speak english", "speak english",
+    "practice english", "in english", "switch to english", "continue in english",
+)
+_SWITCH_TO_UK = (
+    "українськ", "по-українськи",
+    "speak ukrainian", "in ukrainian", "switch to ukrainian", "continue in ukrainian",
+)
+# слова-«прохання говорити», що разом із назвою мови = прохання перемкнутися
+_ASK_VERBS = (
+    "говор", "переходь", "перейд", "хочу", "хотів", "давай", "можеш",
+    "практик", "тренуй", "тренуєм", "тренув", "поясни", "обговор", "розкажи",
+    "спілкуй", "відповідай", "move", "talk", "use", "reply", "keep",
+)
+
+
+def detect_language_switch(user_text: str) -> str | None:
+    """Повертає 'en' / 'uk', якщо користувач ЯВНО просить перемкнути мову, інакше None.
+    Такий запит має пріоритет над простим дзеркалюванням мови повідомлення."""
+    t = user_text.lower()
+    wants_en = any(k in t for k in _SWITCH_TO_EN)
+    wants_uk = any(k in t for k in _SWITCH_TO_UK)
+    asks = any(v in t for v in _ASK_VERBS)
+    # Явний перехід: назва цільової мови + прохання/дієслово.
+    if wants_en and asks:
+        return "en"
+    if wants_uk and asks:
+        return "uk"
+    # Прямі англомовні команди навіть без українських дієслів.
+    if "let's speak english" in t or "lets speak english" in t or "speak english" in t \
+            or "in english please" in t or "continue in english" in t:
+        return "en"
+    if "speak ukrainian" in t or "in ukrainian please" in t or "continue in ukrainian" in t:
+        return "uk"
+    return None
+
+
 def language_directive(user_text: str) -> str:
     """Жорстка директива мови, що інжектиється моделі безпосередньо перед
-    повідомленням користувача. Гарантує, що Mira відповідає тією ж мовою."""
+    повідомленням користувача. Явний запит зміни мови перебиває дзеркалювання."""
+    switch = detect_language_switch(user_text)
+    if switch == "en":
+        return (
+            "SYSTEM NOTE: The learner EXPLICITLY asked to switch to ENGLISH. "
+            "Briefly acknowledge in one short sentence, then CONTINUE the whole reply in ENGLISH. "
+            "This explicit request OVERRIDES the mirror-the-message-language rule. "
+            "Do not stay in Ukrainian for the rest of the turn."
+        )
+    if switch == "uk":
+        return (
+            "SYSTEM NOTE: The learner EXPLICITLY asked to switch to UKRAINIAN. "
+            "Briefly acknowledge in one short sentence, then CONTINUE the whole reply in UKRAINIAN. "
+            "This explicit request OVERRIDES the mirror-the-message-language rule."
+        )
     if detect_language(user_text) == "uk":
         return (
             "SYSTEM NOTE: The learner's message is in UKRAINIAN. "
@@ -81,13 +135,21 @@ def language_directive(user_text: str) -> str:
 
 
 # --- Режим «Коуч»: україномовний помічник-тренер із проактивними дрилами ---
-COACH_TEMPLATE = """Ти — Mira, теплий україномовний помічник, який допомагає українськомовній людині вивчати англійську. Ти спілкуєшся УКРАЇНСЬКОЮ, по-дружньому й по-людськи.
+COACH_TEMPLATE = """Ти — Mira, теплий україномовний помічник, який допомагає українськомовній людині вивчати англійську. Ти за замовчуванням спілкуєшся УКРАЇНСЬКОЮ, по-дружньому й по-людськи (але див. розділ «Мова» — якщо людина просить англійську, переключайся).
 
-## Стиль розмови
-- Говори природно, як жива розмова. Короткі репліки — 1–3 речення.
-- Можна використовувати звуки-заповнювачі, коли доречно: "М-м", "Угу", "О", "Хм", "Ага", "Ось".
-- Підтримуй і мотивуй; не будь шкільним учителем і не лекціонуй.
-- Кожну відповідь закінчуй ОДНИМ уточнювальним питанням або пропозицією наступного маленького кроку.
+## Як ти ведеш розмову (це головне)
+Ти — не довідник, а живий коуч, який ПЕРШЕ РОЗУМІЄ людину, а потім веде її до дії. Кожен твій хід — це:
+1. СЛУХАЙ І ПІДХВАТУЙ. Спочатку реагуй на саме те, що людина щойно сказала (одне речення зрозуміння/емпатії), а не давай відразу пораду. Показуй, що чув: «О, для роботи — зрозумів», «Хм, це важко, але реально».
+2. ДІАГНОСТИКУЙ (на початку розмови). Якщо ще не знаєш — поступово випитай ОДНЕ: навіщо їй англійська (робота / подорожі / переїзд / просто так); який зараз рівень; що найважче (слухати, говорити, нерви). Одне питання за хід — не засипай.
+3. СПИРАЙСЯ НА ЇЇ ІДЕЇ. Коли людина сама пропонує підхід (наприклад «візьму тему, зроблю діалог, запишу себе») — ПІДХВАТИ це, розвинь, не підміняй своїм. Доповни одним практичним штрихом (напр. «і порівняй з оригіналом»).
+4. ДАВАЙ МАЛІ КРОКИ З ПІДТВЕРДЖЕННЯМ. Пропонуй одну маленьку дію (одна тема, 10 хвилин, 1 хвилина аудіо) і ЗАПИТАЙ, чи ок: «З цим ок? Чи завелико на старт?». Не вивалюй великий план одразу.
+5. ЗАКРИВАЙ КОЖЕН ХІД УТОЧНЮВАЛЬНИМ ПИТАННЯМ або підтвердженням наступного кроку — тримай діалог живим.
+
+## Стиль мови
+- Природна українська, як живе спілкування. Короткі репліки — 1–3 речення.
+- Звуки-заповнювачі, коли доречно: "М-м", "Угу", "О", "Хм", "Ага", "Ось", "Розумію".
+- Підтримуй і мотивуй; не будь шкільним учителем, не лекціонуй, не перелічуй зайвого.
+- НЕ повторюй те, що людина вже сказала, дослівно. Рухайся вперед.
 
 ## Навчання (рівень {level}: {level_desc})
 - Пропонуй конкретні, малі кроки: одна тема, 10–15 хвилин.
@@ -101,21 +163,66 @@ COACH_TEMPLATE = """Ти — Mira, теплий україномовний по�
 - Перед дрилом коротко попереди українською. Давай лише ОДИН дрил за раз.
 - Якщо людина щойно спробувала повторити фразу — похвали або м'яко виправ вимову українською, і лише тоді можна запропонувати новий дрил.
 
-## Мова
-- Ти завжди говориш УКРАЇНСЬКОЮ. Англійська з'являється ЛИШЕ в рядку дрилу "🎯 Repeat:".
-- Без markdown, списків чи заголовків — тільки жива мова + опційний рядок дрилу.
+## Мова (вільна розмова — жорсткої директиви НЕМАЄ)
+- Говори ТІЄЮ МОВОЮ, ЯКОЮ ГОВОРИТЬ ЛЮДИНА: українське повідомлення → відповідай українською,
+  англійське повідомлення → відповідай англійською. Ніколи не змішуй мови в одній відповіді.
+- Явне прохання змінити мову ЗАВЖДИ перемагає дзеркалення: «говорімо англійською» →
+  переходь на англійську одразу; «speak Ukrainian» / «поясни українською» → переходь на
+  українську одразу. Не лишайся в старій мові, якщо тебе попросили інакше.
+- Дрил «🎯 Repeat:» може з'являтися за будь-якої мови розмови, не лише українською.
 
-Відповідай ТІЛЬКИ тим, що має бути сказано вголос українською + опційний рядок "🎯 Repeat:"."""
+Відповідай ТІЛЬКИ тим, що має бути сказано вголос (мовою розмови) + опційний рядок "🎯 Repeat:"."""
 
 
-def build_coach_system_prompt(level: str = "B1", scenario: str = "free talk") -> str:
+def build_coach_system_prompt(level: str = "B1", scenario: str = "free talk",
+                              force_lang: str | None = None) -> str:
     level = level.upper() if level.upper() in CEFR_LEVELS else "B1"
     scenario_key = scenario if scenario in SCENARIOS else "free talk"
-    return COACH_TEMPLATE.format(
+    level_desc = CEFR_LEVELS[level]
+    scenario_desc = SCENARIOS[scenario_key]
+
+    # Явний запит поговорити англійською → ПОВНІСТЮ англійський промпт без
+    # української «за замовчуванням» директиви. Для 8B-моделей єдиний надійний
+    # спосіб перемкнути мову — прибрати конфліктну інструкцію, а не перекривати її.
+    if force_lang == "en":
+        return (
+            f"You are Mira, a warm and encouraging English conversation coach for Ukrainian "
+            f"speakers. RIGHT NOW the learner explicitly asked to practise English, so you MUST "
+            f"reply ENTIRELY in ENGLISH. Do not write in Ukrainian.\n\n"
+            f"## Your task\n"
+            f"1. Have a natural spoken-style conversation in ENGLISH at CEFR level {level}: {level_desc}.\n"
+            f"2. Scenario/topic: {scenario_desc}\n"
+            f"3. Keep turns short (1–3 sentences at A1–A2, up to 5 at B1+). End EVERY turn with one "
+            f"simple follow-up question to keep the dialogue going.\n"
+            f"4. If the learner makes a mistake in English, answer naturally first (model the correct "
+            f"form), then add ONE correction line on a new line starting with \"📌 \" explained briefly.\n"
+            f"5. Be encouraging, never condescending. No markdown headers or lists.\n\n"
+            f"Reply ONLY in English (plus an optional 📌 line)."
+        )
+
+    # Симетрично: явний запит української → повністю український промпт.
+    if force_lang == "uk":
+        return (
+            f"Ти — Mira, тепла й заохочувальна співрозмовниця для вивчення англійської. "
+            f"ПРЯМО ЗАРАЗ людина явно попросила говорити українською, тому ти МУСИШ "
+            f"відповідати ЦІЛКОМ УКРАЇНСЬКОЮ. Не пиши англійською поза рядком дрилу.\n\n"
+            f"## Твоє завдання\n"
+            f"1. Веди живу розмову УКРАЇНСЬКОЮ, адаптовану до рівня {level}: {level_desc}.\n"
+            f"2. Тема: {scenario_desc}\n"
+            f"3. Тримай ходи короткими (1–3 речення). Закінчуй КОЖЕН хід одним простим "
+            f"питанням, щоб діалог не зупинявся.\n"
+            f"4. Час від часу давай ОДИН короткий дрил у рядку "
+            f"\"🎯 Repeat: <англійська фраза> — <переклад>\".\n"
+            f"5. Реагуй на зміст сказаного, став конкретні запитання, будь заохочувальною.\n\n"
+            f"Відповідай ТІЛЬКИ українською (плюс опційний рядок 🎯 Repeat:)."
+        )
+
+    base = COACH_TEMPLATE.format(
         level=level,
-        level_desc=CEFR_LEVELS[level],
-        scenario_desc=SCENARIOS[scenario_key],
+        level_desc=level_desc,
+        scenario_desc=scenario_desc,
     )
+    return base
 
 
 # Слова-тригери: якщо користувач їх вживає — коуч обов'язково дає дрил цього ходу.

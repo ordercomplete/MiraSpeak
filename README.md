@@ -13,14 +13,14 @@ python -m app.main
 ```
 
 ## AI Stack
-- **Ollama + LLM** за профілем (high: llama3.1:8b / low 6GB: llama3.2:3b)
+- **Ollama + LLM** за профілем (high: gemma4:26b / low 6GB: llama3.2:3b)
 - **faster-whisper** (STT, cpu/cuda auto; автовідкат на CPU, якщо CUDA-бібліотеки відсутні)
 - **edge-tts** (TTS EN + UK), Piper — офлайн-опція
 
 ## Профілі продуктивності (`MODEL_PROFILE`)
 | Профіль | VRAM/залізо | LLM | СТТ |
 |---|---|---|---|
-| `high` | ≥ 16 GB (RTX 3090+) | `llama3.1:8b` | `base` (cuda) |
+| `high` | ≥ 16 GB (RTX 3090+) | `gemma4:26b` | `small` (cuda) |
 | `medium` | 8–12 GB | `qwen2.5:7b` | `base` (cuda) |
 | `low` | **6 GB** | `llama3.2:3b` | `base` (cuda/int8) |
 | `cpu` | без відеокарти | `qwen2.5:3b` | `base` (int8) |

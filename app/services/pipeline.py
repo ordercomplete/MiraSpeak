@@ -5,6 +5,7 @@ from app.services.prompt import (
     build_system_prompt,
     language_directive,
     build_coach_system_prompt,
+    detect_language_switch,
 )
 
 
@@ -13,8 +14,10 @@ class PipelineService:
 
     Два режими:
     - tutor: англійський тьютор (відповідає мовою користувача, виправлення 📌).
-    - coach: україномовний помічник-коуч (завжди українською), який час від часу
-      дає короткий дрил «🎯 Repeat: <англ. фраза> — <переклад>» для тренування вимови.
+    - coach: помічник-коуч вільної розмови (дзеркалить мову користувача —
+      українська чи англійська; явне прохання змінити мову завжди виконується),
+      який час від часу дає короткий дрил «🎯 Repeat: <фраза> — <переклад>»
+      для тренування вимови.
     """
 
     async def voice_turn(
@@ -100,9 +103,20 @@ class PipelineService:
 
     # ---------------- Коуч (українська + дрили) ----------------
     async def _coach_turn(self, user_text, level, scenario, history, drill_target=None) -> dict:
-        messages = [{"role": "system", "content": build_coach_system_prompt(level, scenario)}]
+        # Явний запит змінити мову — передаємо у системний промпт як ВЕРХНІЙ пріоритет.
+        switch = detect_language_switch(user_text)
+        messages = [{"role": "system", "content": build_coach_system_prompt(level, scenario, force_lang=switch)}]
         messages.extend(history or [])
         user_content = user_text
+        # Підкріплення мовної директиви ОСТАННЬОЮ нотаткою прямо перед ходом
+        # користувача: у 8B-моделей recency bias сильний, тому директиву варто
+        # повторити в кінці, а не лише на початку системного промпту.
+        if switch == "en":
+            messages.append({"role": "system", "content":
+                "REMINDER: you are now speaking ENGLISH. Reply in English, not Ukrainian."})
+        elif switch == "uk":
+            messages.append({"role": "system", "content":
+                "REMINDER: reply in UKRAINIAN this turn."})
         # Якщо це «перевірка» дрилу — інструктуємо коуча порівняти вимову зі зразком.
         if drill_target:
             user_content = (
