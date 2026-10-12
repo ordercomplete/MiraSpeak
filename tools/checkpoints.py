@@ -123,7 +123,7 @@ CHECKPOINTS = [
      "kind": "auto", "check": '''{py} -c "from app.services.prompt import build_system_prompt; p=build_system_prompt('A2','shopping'); print('elementary' in p, 'market' in p); import sys; sys.exit(0 if 'elementary' in p and 'market' in p else 1)"''',
      "requires": "venv"},
     {"id": "B5-4", "block": 5, "title": "синтетичний тест LLM-формату (відповідь містить 📌)",
-     "kind": "auto", "check": '''{py} -c "import asyncio,sys; from app.services import llm_service; from app.services.prompt import build_system_prompt; r=asyncio.run(llm_service.chat([{'role':'system','content':build_system_prompt('A2','free talk')},{'role':'user','content':'Yesterday I go to the school and I seen my friend.'}])); print(repr(r[:300])); sys.exit(0 if chr(128204) in r else 1)"''',
+     "kind": "auto", "check": '''{py} -c "import asyncio,sys; from app.services import llm_service; from app.services.prompt import build_system_prompt; r=asyncio.run(llm_service.chat([{'role':'system','content':build_system_prompt('A2','free talk')},{'role':'user','content':'Yesterday I go to the school and I seen my friend.'}])); print('len',len(r),'haspin',chr(128204) in r); sys.exit(0 if chr(128204) in r else 1)"''',
      "requires": "ollama", "timeout": 200},
     {"id": "B5-M1", "block": 5, "title": "ФІЗИЧНИЙ: білінгвальність на слух — «поясни» → відповідь українською",
      "kind": "manual", "criteria": "у чаті написати «поясни», Mira відповідає UA; вердикт у -r"},
@@ -134,7 +134,7 @@ CHECKPOINTS = [
 
     # ================= Блок 6 =================
     {"id": "B6-1", "block": 6, "title": "static/index.html створено (розмітка+стилі+JS)",
-     "kind": "auto", "check": '''python -c "import pathlib,sys; p=pathlib.Path('static/index.html'); s=p.read_text(encoding='utf-8') if p.exists() else ''; need=['id=\\'mic\\'', 'id=\\'level\\'', 'MediaRecorder', '/api/voice', '/api/text', '/api/meta']; miss=[n for n in need if n not in s]; print('missing:',miss); sys.exit(1 if miss else 0)"'''},
+     "kind": "auto", "check": '''python -c "import pathlib,sys; p=pathlib.Path('static/index.html'); s=p.read_text(encoding='utf-8') if p.exists() else ''; need=['id='+chr(34)+'mic'+chr(34), 'id='+chr(34)+'level'+chr(34), 'MediaRecorder', '/api/voice', '/api/text', '/api/meta']; miss=[n for n in need if n not in s]; print('missing:',miss); sys.exit(1 if miss else 0)"'''},
     {"id": "B6-2", "block": 6, "title": "сервер віддає UI на /",
      "kind": "auto", "check": '''{py} -c "import httpx,sys; r=httpx.get('http://127.0.0.1:8000/', timeout=5); print(r.status_code, len(r.text)); sys.exit(0 if r.status_code==200 and 'MiraSpeak' in r.text else 1)"''',
      "requires": "server", "timeout": 30},

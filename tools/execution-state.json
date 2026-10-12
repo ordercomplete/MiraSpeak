@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-12 22:05:46",
+  "updated": "2026-10-12 22:31:54",
   "results": {
     "B2-1": {
       "status": "pass",
@@ -26,11 +26,11 @@
       "kind": "auto"
     },
     "B8-3": {
-      "status": "blocked",
-      "result": "venv не створено — виконай Блок 2, крок 3",
-      "output": "",
-      "duration": null,
-      "at": "2026-10-11 23:35:35",
+      "status": "pass",
+      "result": "OK (1.77 с)",
+      "output": "......                                                                   [100%]\n6 passed in 1.26s",
+      "duration": 1.77,
+      "at": "2026-10-12 22:26:30",
       "kind": "auto"
     },
     "B2-2": {
@@ -263,6 +263,158 @@
       "output": "Block 4: voice pipeline API (STT->LLM->TTS orchestrator + REST endpoints)",
       "duration": 0.05,
       "at": "2026-10-12 22:05:46",
+      "kind": "auto"
+    },
+    "B5-1": {
+      "status": "pass",
+      "result": "OK (1.03 с)",
+      "output": "6 7",
+      "duration": 1.03,
+      "at": "2026-10-12 22:26:25",
+      "kind": "auto"
+    },
+    "B5-3": {
+      "status": "pass",
+      "result": "OK (0.94 с)",
+      "output": "True True",
+      "duration": 0.94,
+      "at": "2026-10-12 22:26:26",
+      "kind": "auto"
+    },
+    "B7-1": {
+      "status": "pass",
+      "result": "OK (0.25 с)",
+      "output": "True True True",
+      "duration": 0.25,
+      "at": "2026-10-12 22:26:26",
+      "kind": "auto"
+    },
+    "B7-2": {
+      "status": "pass",
+      "result": "OK (1.06 с)",
+      "output": "D:\\GEN\\MiraSpeak\\data\\miraspeak.db True",
+      "duration": 1.06,
+      "at": "2026-10-12 22:26:27",
+      "kind": "auto"
+    },
+    "B7-5": {
+      "status": "pass",
+      "result": "OK (0.3 с)",
+      "output": "{'total_turns': 1, 'words': 1, 'sessions': 1, 'streak': 1}",
+      "duration": 0.3,
+      "at": "2026-10-12 22:26:28",
+      "kind": "auto"
+    },
+    "B7-6": {
+      "status": "pass",
+      "result": "OK (0.27 с)",
+      "output": "2 user",
+      "duration": 0.27,
+      "at": "2026-10-12 22:26:28",
+      "kind": "auto"
+    },
+    "B8-1": {
+      "status": "pass",
+      "result": "OK (0.06 с)",
+      "output": "True",
+      "duration": 0.06,
+      "at": "2026-10-12 22:26:28",
+      "kind": "auto"
+    },
+    "B8-2": {
+      "status": "pass",
+      "result": "OK (0.06 с)",
+      "output": "True",
+      "duration": 0.06,
+      "at": "2026-10-12 22:26:28",
+      "kind": "auto"
+    },
+    "B5-2": {
+      "status": "pass",
+      "result": "OK (0.39 с)",
+      "output": "['A1', 'A2', 'B1', 'B2', 'C1', 'C2']",
+      "duration": 0.39,
+      "at": "2026-10-12 22:26:46",
+      "kind": "auto"
+    },
+    "B5-4": {
+      "status": "pass",
+      "result": "OK (17.8 с)",
+      "output": "len 89 haspin True",
+      "duration": 17.8,
+      "at": "2026-10-12 22:30:19",
+      "kind": "auto"
+    },
+    "B6-1": {
+      "status": "pass",
+      "result": "OK (0.06 с)",
+      "output": "missing: []",
+      "duration": 0.06,
+      "at": "2026-10-12 22:30:46",
+      "kind": "auto"
+    },
+    "B6-2": {
+      "status": "pass",
+      "result": "OK (0.36 с)",
+      "output": "200 6627",
+      "duration": 0.36,
+      "at": "2026-10-12 22:27:19",
+      "kind": "auto"
+    },
+    "B7-3": {
+      "status": "pass",
+      "result": "OK (0.5 с)",
+      "output": "200 {\"total_turns\":0,\"words\":0,\"sessions\":1,\"streak\":0}",
+      "duration": 0.5,
+      "at": "2026-10-12 22:28:09",
+      "kind": "auto"
+    },
+    "B7-4": {
+      "status": "pass",
+      "result": "OK (0.5 с)",
+      "output": "200 {\"words\":[{\"id\":1,\"word\":\"miraspeak-test\",\"translation\":\"����\",\"example\":\"\"}]}",
+      "duration": 0.5,
+      "at": "2026-10-12 22:28:10",
+      "kind": "auto"
+    },
+    "B5-5": {
+      "status": "pass",
+      "result": "OK (0.05 с)",
+      "output": "Block 5: prompts, CEFR, bilingual rules",
+      "duration": 0.05,
+      "at": "2026-10-12 22:31:13",
+      "kind": "auto"
+    },
+    "B6-3": {
+      "status": "pass",
+      "result": "OK (0.03 с)",
+      "output": "Block 6: MVP UI (static/index.html)",
+      "duration": 0.03,
+      "at": "2026-10-12 22:31:17",
+      "kind": "auto"
+    },
+    "B7-8": {
+      "status": "pass",
+      "result": "OK (0.03 с)",
+      "output": "Block 7: DB, SRS, progress (sessions, words, SM-2)",
+      "duration": 0.03,
+      "at": "2026-10-12 22:31:21",
+      "kind": "auto"
+    },
+    "B8-4": {
+      "status": "pass",
+      "result": "OK (0.12 с)",
+      "output": "True",
+      "duration": 0.12,
+      "at": "2026-10-12 22:31:54",
+      "kind": "auto"
+    },
+    "B8-5": {
+      "status": "pass",
+      "result": "OK (0.11 с)",
+      "output": "True",
+      "duration": 0.11,
+      "at": "2026-10-12 22:31:54",
       "kind": "auto"
     }
   }
