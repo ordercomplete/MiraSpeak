@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-13 00:45:27",
+  "updated": "2026-10-13 00:45:35",
   "results": {
     "B2-1": {
       "status": "pass",
@@ -548,9 +548,9 @@
     "B10-6": {
       "status": "pass",
       "result": "OK (0.03 с)",
-      "output": "Block 10: hands-free auto-conversation, Ukrainian coach, pronunciation drills, TTS in flashcards",
+      "output": "Block 10: hands-free conversation, coach mode, pronunciation drills, audio in cards",
       "duration": 0.03,
-      "at": "2026-10-13 00:41:53",
+      "at": "2026-10-13 00:45:35",
       "kind": "auto"
     }
   }

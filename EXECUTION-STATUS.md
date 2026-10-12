@@ -1,6 +1,6 @@
 # MiraSpeak — статус виконання плану
 
-> Автоматично згенеровано `python tools/progress.py report`. Оновлено: 2026-10-13 00:45:27
+> Автоматично згенеровано `python tools/progress.py report`. Оновлено: 2026-10-13 00:45:35
 
 ## Підсумок
 
@@ -153,7 +153,7 @@
 | `B10-3` | синт | _split_coach_reply виділяє дрил із «🎯 Repeat: …» | ✅ pass | OK (0.75 с) | 2026-10-13 00:45:19 |
 | `B10-4` | синт | POST /api/tts озвучує текст лексики | ✅ pass | OK (0.3 с) | 2026-10-13 00:45:27 |
 | `B10-5` | синт | UI: режим Тьютор/Коуч, hands-free, VAD, 🔊 у картках | ✅ pass | OK (0.05 с) | 2026-10-13 00:45:19 |
-| `B10-6` | синт | git commit «Block 10» | ✅ pass | OK (0.03 с) | 2026-10-13 00:41:53 |
+| `B10-6` | синт | git commit «Block 10» | ✅ pass | OK (0.03 с) | 2026-10-13 00:45:35 |
 | `B10-M1` | ФІЗ | ФІЗИЧНИЙ: hands-free розмова — говориш, Mira сама відповідає | ⏳ pending |  |  |
 | `B10-M2` | ФІЗ | ФІЗИЧНИЙ: коуч дає українську підказку + дрил «Повторити за мною» | ⏳ pending |  |  |
 
@@ -643,6 +643,6 @@ missing: []
 <details><summary><code>B10-6</code> — git commit «Block 10» (✅)</summary>
 
 ```
-Block 10: hands-free auto-conversation, Ukrainian coach, pronunciation drills, TTS in flashcards
+Block 10: hands-free conversation, coach mode, pronunciation drills, audio in cards
 ```
 </details>
