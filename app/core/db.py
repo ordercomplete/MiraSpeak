@@ -152,6 +152,13 @@ def get_history(session_id: int, limit: int = 40) -> list[dict]:
     return [dict(r) for r in reversed(rows)]
 
 
+def delete_session(session_id: int) -> None:
+    """Видалити чат: пов'язану історію реплік + саму сесію."""
+    with get_conn() as conn:
+        conn.execute("DELETE FROM messages WHERE session_id = ?", (session_id,))
+        conn.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
+
+
 def close_session(session_id: int) -> None:
     with get_conn() as conn:
         conn.execute("UPDATE sessions SET ended_at = ? WHERE id = ?", (_now(), session_id))

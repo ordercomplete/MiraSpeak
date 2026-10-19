@@ -51,6 +51,12 @@ class Settings(BaseSettings):
     tts_voice_en: str = "en-US-AriaNeural"
     tts_voice_uk: str = "uk-UA-PolinaNeural"
     piper_voice_en: str = ""
+    piper_voice_uk: str = r"D:\models\piper\uk_UA-ukrainian_tts-medium.onnx"
+    # --- Supertonic 3 (Agent-brief.MD) ---
+    supertonic_model: str = "supertonic-3"
+    supertonic_model_dir: str = r"D:\models\tts\supertonic-3"
+    supertonic_voice: str = "F1"          # preset style: F1-F5, M1-M5
+    supertonic_speed: float = 1.05
     # Додаток
     model_profile: str = "high"           # high | medium | low | cpu
     database_path: str = "data/miraspeak.db"

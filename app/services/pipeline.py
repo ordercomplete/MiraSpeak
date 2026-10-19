@@ -1,8 +1,10 @@
 import asyncio
 
 from app.services import llm_service, stt_service, tts_service
+from app.services import llm_service, stt_service, tts_service
 from app.services.prompt import (
     build_system_prompt,
+    build_mixed_system_prompt,
     language_directive,
     build_coach_system_prompt,
     detect_language_switch,
@@ -28,19 +30,18 @@ class PipelineService:
         mode: str = "tutor",
         level: str = "B1",
         scenario: str = "free talk",
+        target_lang: str = "en",
         drill_target: str | None = None,
         history: list[dict] | None = None,
     ) -> dict:
-        # 1) STT (CPU/GPU-bound → у потік, щоб не блокувати event loop)
         transcript = await asyncio.to_thread(
             stt_service.transcribe, audio_bytes, language
         )
         if not transcript:
             return {"ok": False, "error": "empty_transcript"}
-        # 2) LLM у вибраному режимі
         return await self.process_text(
             transcript, mode=mode, level=level, scenario=scenario,
-            drill_target=drill_target, history=history,
+            target_lang=target_lang, drill_target=drill_target, history=history,
         )
 
     async def text_turn(
@@ -50,12 +51,13 @@ class PipelineService:
         mode: str = "tutor",
         level: str = "B1",
         scenario: str = "free talk",
+        target_lang: str = "en",
         drill_target: str | None = None,
         history: list[dict] | None = None,
     ) -> dict:
         return await self.process_text(
             message, mode=mode, level=level, scenario=scenario,
-            drill_target=drill_target, history=history,
+            target_lang=target_lang, drill_target=drill_target, history=history,
         )
 
     async def process_text(
@@ -65,42 +67,48 @@ class PipelineService:
         mode: str = "tutor",
         level: str = "B1",
         scenario: str = "free talk",
+        target_lang: str = "en",
         drill_target: str | None = None,
         history: list[dict] | None = None,
     ) -> dict:
         if mode == "coach":
             return await self._coach_turn(user_text, level, scenario, history, drill_target)
-        return await self._tutor_turn(user_text, level, scenario, history)
+        if mode == "mixed":
+            return await self._mixed_turn(user_text, level, scenario, target_lang, history)
+        return await self._tutor_turn(user_text, level, scenario, target_lang, history)
 
-    # ---------------- Тьютор (англійська, з виправленнями) ----------------
-    async def _tutor_turn(self, user_text, level, scenario, history) -> dict:
-        messages = [{"role": "system", "content": build_system_prompt(level, scenario)}]
+    # Тьютор (мова вивчення target_lang, з виправленнями)
+    async def _tutor_turn(self, user_text, level, scenario, target_lang, history) -> dict:
+        messages=[{"role":"system","content":build_system_prompt(level,scenario,target=target_lang)}]
         messages.extend(history or [])
-        messages.append({"role": "system", "content": language_directive(user_text)})
-        messages.append({"role": "user", "content": user_text})
+        messages.append({"role":"system","content":language_directive(user_text)})
+        messages.append({"role":"user","content":user_text})
         try:
-            reply = await llm_service.chat(messages)
+            reply=await llm_service.chat(messages)
         except Exception as e:
-            return {"ok": False, "error": f"llm_error: {e}", "transcript": user_text}
-
-        spoken, correction = self._split_reply(reply)
-        audio = b""
+            return {"ok":False,"error":f"llm_error: {e}","transcript":user_text}
+        spoken,correction=self._split_reply(reply)
+        audio=b""
         if spoken:
-            try:
-                audio = await tts_service.synthesize(spoken, tts_service.detect_language(spoken))
-            except Exception:
-                audio = b""
-        return {
-            "ok": True,
-            "transcript": user_text,
-            "reply_text": reply,
-            "reply_spoken": spoken,
-            "correction": correction,
-            "drill": None,
-            "audio": audio,
-            "drill_audio": b"",
-        }
+            try: audio=await tts_service.synthesize(spoken,target_lang)
+            except Exception: audio=b""
+        return {"ok":True,"transcript":user_text,"reply_text":reply,"reply_spoken":spoken,"correction":correction,"drill":None,"audio":audio}
 
+    # Змішаний режим (переважно цільова мова + іноземні вставки)
+    async def _mixed_turn(self, user_text, level, scenario, target_lang, history) -> dict:
+        messages=[{"role":"system","content":build_mixed_system_prompt(level,scenario,target=target_lang)}]
+        messages.extend(history or [])
+        messages.append({"role":"user","content":user_text})
+        try:
+            reply=await llm_service.chat(messages)
+        except Exception as e:
+            return {"ok":False,"error":f"llm_error: {e}","transcript":user_text}
+        spoken,correction=self._split_reply(reply)
+        audio=b""
+        if spoken:
+            try: audio=await tts_service.synthesize(spoken,target_lang)
+            except Exception: audio=b""
+        return {"ok":True,"transcript":user_text,"reply_text":reply,"reply_spoken":spoken,"correction":correction,"audio":audio}
     # ---------------- Коуч (українська + дрили) ----------------
     async def _coach_turn(self, user_text, level, scenario, history, drill_target=None) -> dict:
         # Явний запит змінити мову — передаємо у системний промпт як ВЕРХНІЙ пріоритет.
