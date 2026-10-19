@@ -29,10 +29,11 @@ git pull --ff-only
 - Мультиспікер: `<|speaker:0|>` … `<|speaker:15|>` (до 16 персонажів у запиті).
 - Мови: у списку model card **є `uk`** (і `en`) — на відміну від S2 Pro, де українська не підтверджена.
 - Ліцензія: **Fish Audio Community License** (у YAML шапці model card стоїть `license_name: fish-audio-research-license` — розбіжність із розділом «License»; текст `LICENSE` треба прочитати до завантаження ваг і зафіксувати висновок у `docs/DECISIONS.md`).
-- Локальний запуск (офіційно підтримувані шляхи):
+- Локальний запуск (офіційно підтримувані шляхи) — **див. `docs/DECISIONS.md` (гейт 19.10.2026 ПРОЙДЕНО, обрано SGLang-Omni + Docker у WSL2):**
   - **SGLang-Omni**: `sgl-omni serve --model-path fishaudio/drama-3 --port 8000`;
   - **vLLM-Omni**: `vllm serve fishaudio/drama-3 --omni --port 8091`;
-  - обидва віддають HTTP TTS API, сумісне за форматом із `POST /v1/tts` → інтегрується як звичайний TTS-провайдер по localhost.
+  - **Ендпоінт SGLang-Omni: `POST /v1/audio/speech`, поле `{"input": "..."}`** (OpenAI-сумісне; формат `/v1/tts` з `{"text": ...}` — це хмарний API fish.audio, не локальний сервер).
+- **int4-чекпойнт `fishaudio/drama-3-int4`**: GPTQ 4-bit, ваги **20.8 ГБ замість 37.0 ГБ** (FP8), GPTQ-Marlin вимагає compute capability ≥ 8.0 (RTX 3090 = 8.6 ✔), якість WER на рівні FP8 (таблиця 3 cookbook). **Обрано для цієї машини** — FP8 шлях не підтримується апаратно на Ampere.
 
 **Залізо цієї машини:** 3× RTX 3090, 24 ГБ кожна (72 ГБ сумарно), Windows.
 
@@ -46,17 +47,17 @@ git pull --ff-only
 
 ## 2. Кроки інтеграції
 
-### Крок 1 — Доказ запуску (gate)
-1. `git pull --ff-only` (крок 0).
-2. Прочитати `LICENSE` моделі → висновок у `docs/DECISIONS.md`.
-3. Підняти SGLang-Omni (або vLLM-Omni) у WSL2/Docker на 2–3 GPU; виміряти фактичний VRAM і шлях квантування (FP8 чи bf16-фолбек).
-4. Тест-синтез uk + en через `POST /v1/tts`.
-5. Невдача (не вистачає VRAM / нема збірки під Windows) → план зупиняється, питання в `docs/OPEN_QUESTIONS.md`, MiraSpeak продовжує працювати на Supertonic.
+### Крок 1 — Доказ запуску (gate) ✔ ВИКОНАНО 19.10.2026 (див. `docs/DECISIONS.md`)
+1. `git pull --ff-only` (крок 0). ✔
+2. Прочитати `LICENSE` моделі → висновок у `docs/DECISIONS.md`. ✔ (Community License v1.0, non-commercial OK)
+3. Підняти SGLang-Omni у Docker/WSL2; виміряти VRAM і квантування. ✔ (int4, 3 GPU, деталі в DECISIONS)
+4. Тест-синтез uk + en через `POST /v1/audio/speech`. ✔ (200: uk 2.42 с, en 7.24 с, WAV 44.1 kHz)
+5. Невдача → план зупиняється (не спрацювало).
 
 ### Крок 2 — Провайдер
 - Новий файл `app/services/tts_fishdrama.py`, клас `FishDramaProvider` у стилі `SupertonicProvider`:
   - `available()` — швидкий health-check `http://127.0.0.1:<port>/…` (таймаут ~1 с);
-  - `synthesize_sync(text, language, voice=None, speed=None) -> bytes` — `httpx` POST на `/v1/tts` (формат model card: `{"text": …, "reference_id": …}`), повертає WAV/MP3 bytes;
+  - `synthesize_sync(text, language, voice=None, speed=None) -> bytes` — `httpx` POST на `http://127.0.0.1:8000/v1/audio/speech` з `{"input": text}` (перевірено працює; для клонування — необов'язкове поле `references: [{audio_path, text}]`), повертає WAV bytes;
   - ліниве завантаження, `threading.Lock` на клієнт, таймаути, будь-яка помилка → виняток (обробляється фолбеком у `tts.py`).
 ### Крок 3 — Конфіг
 - `app/core/config.py`: `fish_tts_base_url` (default `http://127.0.0.1:8000`), `fish_tts_model` (`drama-3`), `fish_tts_reference_id` ("" = без клонування, дефолтний голос), `fish_tts_timeout_s` (default 30).
@@ -93,9 +94,9 @@ git pull --ff-only
 - Не завантажуємо ваги до проходження кроку 1 (ліцензія + VRAM-gate).
 
 ## 4. Чекліст DoD
-- [ ] `git pull --ff-only` виконано першим кроком.
-- [ ] `LICENSE` прочитано, висновок у `docs/DECISIONS.md`.
-- [ ] Сервер Drama 3 піднято локально, тест uk+en пройшов, VRAM зафіксовано.
+- [x] `git pull --ff-only` виконано першим кроком.
+- [x] `LICENSE` прочитано, висновок у `docs/DECISIONS.md`.
+- [x] Сервер Drama 3 піднято локально, тест uk+en пройшов, VRAM зафіксовано.
 - [ ] `FishDramaProvider` + гілка у `tts.py` + конфіг.
 - [ ] `fishdrama` з'явився у `GET /api/settings.providers`, працює тест голосу.
 - [ ] Фолбек при недоступному сервері працює; `pytest` зелений; мережа заблокована тестом.
