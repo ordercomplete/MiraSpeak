@@ -777,32 +777,8 @@ async function loadSettings() {
   try {
     const r = await fetch('/api/settings');
     const d = await r.json();
-    setVoice.innerHTML = d.voices.map(v =>
-      '<option value="' + v + '"' + (v === d.settings.supertonic_voice ? ' selected' : '') + '>' + v + '</option>').join('');
     setProvider.innerHTML = d.providers.map(p =>
       '<option value="' + p + '"' + (p === d.settings.tts_provider ? ' selected' : '') + '>' + p + '</option>').join('');
-    // Для fishdrama: свої набори голосів по режимах з описом тону.
-    _lastSettings = d;
-    fillVoices(d);
-  } catch (e) { setMsg.textContent = 'Не вдалося завантажити: ' + e.message; }
-}
-
-// Селект голосів залежить від провайдера: для fishdrama — голоси режимів
-// з описом тону, для інших — класичні стилі supertonic.
-function fillVoices(d) {
-  const provider = setProvider.value;
-  if (provider === 'fishdrama' && d.fish_voices && d.fish_voices.length) {
-    setVoice.innerHTML = d.fish_voices.map(fv =>
-      '<option value="' + fv.id + '">' + fv.tone + '</option>').join('');
-  } else {
-    setVoice.innerHTML = d.voices.map(v =>
-      '<option value="' + v + '"' + (v === d.settings.supertonic_voice ? ' selected' : '') + '>' + v + '</option>').join('');
-  }
-}
-
-// Перезаповнити голоси при перемиканні провайдера (без збереження доки не натиснуто «Зберегти»).
-let _lastSettings = null;
-setProvider.onchange = () => { if (_lastSettings) fillVoices(_lastSettings); };
     // Позначка «AI-голос» у шапці: який саме рушій зараз озвучує відповіді.
     const aiLabel = document.getElementById('ailabel');
     if (aiLabel) {
@@ -810,6 +786,9 @@ setProvider.onchange = () => { if (_lastSettings) fillVoices(_lastSettings); };
         ? 'Голос Mira згенеровано ШІ: Fish Audio Drama 3 (локальний сервер, ліцензія Fish Audio Community)'
         : 'Голос Mira згенеровано штучним інтелектом (Supertonic 3, ліцензія OpenRAIL-M)';
     }
+    // Для fishdrama: свої набори голосів по режимах з описом тону.
+    _lastSettings = d;
+    fillVoices(d);
     setSpeed.value = d.settings.supertonic_speed;
     setSpeedVal.textContent = Number(d.settings.supertonic_speed).toFixed(2);
     const s = d.settings;
@@ -824,6 +803,23 @@ setProvider.onchange = () => { if (_lastSettings) fillVoices(_lastSettings); };
     setCoachTemplate.value = s.coach_template || '';
   } catch (e) { setMsg.textContent = 'Не вдалося завантажити: ' + e.message; }
 }
+
+// Селект голосів залежить від провайдера: для fishdrama — голоси режимів
+// з описом тону, для інших — класичні стилі supertonic.
+let _lastSettings = null;
+function fillVoices(d) {
+  const provider = setProvider.value;
+  if (provider === 'fishdrama' && d.fish_voices && d.fish_voices.length) {
+    setVoice.innerHTML = d.fish_voices.map(fv =>
+      '<option value="' + fv.id + '">' + fv.tone + '</option>').join('');
+  } else {
+    setVoice.innerHTML = d.voices.map(v =>
+      '<option value="' + v + '"' + (v === d.settings.supertonic_voice ? ' selected' : '') + '>' + v + '</option>').join('');
+  }
+}
+
+// Перезаповнити голоси при перемиканні провайдера (без збереження доки не натиснуто «Зберегти»).
+setProvider.onchange = () => { if (_lastSettings) fillVoices(_lastSettings); };
 
 document.getElementById('settingsbtn').onclick = () => {
   const show = setPanel.style.display === 'none';
