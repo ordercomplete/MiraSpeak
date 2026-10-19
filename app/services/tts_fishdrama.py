@@ -36,21 +36,53 @@ class FishDramaProvider:
             return False
 
     def synthesize_sync(self, text: str, language: str = "en",
-                        voice: str | None = None, speed: float | None = None) -> bytes:
+                        voice: str | None = None, speed: float | None = None,
+                        mode: str = "tutor") -> bytes:
         """Text -> WAV bytes (PCM 44.1 kHz mono).
 
-        voice/speed are accepted for TTSProvider-interface compatibility but
-        ignored: Drama 3's API has no such parameters (only `input` plus the
-        optional `references` cloning field, unused here).
+        voice = mode name ("tutor" | "coach" | "mixed"): clones that mode's
+        fixed reference voice so the timbre stays stable across turns.
+        Unknown voice -> no reference (random timbre, previous behaviour).
+        speed is accepted for TTSProvider-interface compatibility but ignored:
+        Drama 3's API has no such parameter.
         """
+        payload: dict = {"input": text}
+        reference = self._mode_reference(mode if voice is None else voice)
+        if reference is not None:
+            audio_path, ref_text = reference
+            payload["references"] = [{"audio_path": audio_path, "text": ref_text}]
         with self._lock:
             r = httpx.post(
                 self._tts_url(),
-                json={"input": text},
+                json=payload,
                 timeout=settings.fish_tts_timeout_s,
             )
         r.raise_for_status()
         return r.content
+
+    @staticmethod
+    def _mode_reference(voice: str):
+        """(audio_path, transcript) for a mode, or None if unknown/missing.
+
+        audio_path is container-visible: the Windows D: drive is mounted into
+        the server container at /mnt/d. Config value wins; readable local file
+        is required.
+        """
+        try:
+            entry = settings.fish_tts_mode_voices.get(str(voice), "")
+        except Exception:
+            return None
+        if "|" not in entry:
+            return None
+        fname, ref_text = entry.split("|", 1)
+        # NOTE: D: drive layout is deployment-specific; the path is sent to
+        # the TTS server, never to the cloud (localhost only, offline-first).
+        host_path = settings.fish_voice_base_dir.rstrip("\\/") + "\\" + fname
+        import os
+        if not os.path.isfile(host_path):
+            return None
+        container_path = "file://" + host_path.replace("\\", "/").replace("D:/", "/mnt/d/")
+        return container_path, ref_text.strip()
 
 
 fishdrama_provider = FishDramaProvider()

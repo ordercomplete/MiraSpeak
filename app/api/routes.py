@@ -240,10 +240,15 @@ async def review(word_id: int, quality: int = Form(...)):
 async def get_settings():
     """Поточні налаштування користувача + списки голосів/провайдерів/рівнів/сценаріїв/мів/режимів."""
     us = user_settings.load()
+    fish_voices = [
+        {"id": mode, "tone": settings.fish_voice_tones.get(mode, mode)}
+        for mode in ("tutor", "coach", "mixed")
+    ]
     return {
         "settings": us,
         "voices": ["F1", "F2", "F3", "F4", "F5", "M1", "M2", "M3", "M4", "M5"],
         "providers": ["fishdrama", "supertonic", "piper", "edge"],
+        "fish_voices": fish_voices,
         "levels": available_levels(),
         "scenarios": available_scenarios(),
         "target_languages": available_target_languages(),
@@ -308,13 +313,25 @@ async def save_settings(req: SettingsSaveRequest):
 
 @router.post("/settings/test_voice")
 async def settings_test_voice(
-    voice: str = Form(...), lang: str = Form("uk"), speed: str = Form("1.05")
+    voice: str = Form(...), lang: str = Form("uk"), speed: str = Form("1.05"),
+    mode: str = Form("tutor"),
 ):
-    """Зразок обраного голосу без збереження налаштувань."""
+    """Зразок обраного голосу без збереження налаштувань.
+
+    Для fishdrama параметр voice = голос режиму (tutor/coach/mixed) — клонує
+    фіксований референс цього режиму; явний mode має пріоритет нижчий.
+    """
     from app.services import tts_service
+    provider = user_settings.load().get("tts_provider") or settings.tts_provider
+    if provider == "fishdrama":
+        review_mode = voice if voice in ("tutor", "coach", "mixed") else mode
+        preview_voice, preview_mode = None, review_mode
+    else:
+        preview_voice, preview_mode = voice, "tutor"
     try:
         audio = await tts_service.synthesize(
-            "Привіт, це перевірка голосу Mira.", lang, voice=voice, speed=float(speed)
+            "Привіт, це перевірка голосу Mira.", lang,
+            voice=preview_voice, speed=float(speed), mode=preview_mode,
         )
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"tts_error: {e}")

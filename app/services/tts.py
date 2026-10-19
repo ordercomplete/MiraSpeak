@@ -39,18 +39,21 @@ class TTSService:
         return "uk" if cyr > lat else "en"
 
     async def synthesize(self, text: str, language: str = "en",
-                         voice: str | None = None, speed: float | None = None) -> bytes:
-        """Повертає MP3 (edge) або WAV (piper/supertonic).
-        voice/speed — тимчасовий override (тест голосу), без збереження."""
+                         voice: str | None = None, speed: float | None = None,
+                         mode: str = "tutor") -> bytes:
+        """Повертає MP3 (edge) або WAV (piper/supertonic/fishdrama).
+        voice/speed — тимчасовий override (тест голосу), без збереження.
+        mode — режим розмови (tutor/coach/mixed): тільки fishdrama клонує
+        по ньому фіксований голос (стабільний тембр), інші рушії ігнорують."""
         from app.core import user_settings
         us = user_settings.load()
         provider = us.get("tts_provider") or settings.tts_provider
         voice = voice or us.get("supertonic_voice") or "F1"
         speed = speed or us.get("supertonic_speed") or 1.05
-        # Кеш враховує провайдер/голос/швидкість — після зміни голосу
-        # старі доріжки не віддаються.
+        # Кеш враховує провайдер/голос/швидкість/режим — після зміни голосу
+        # або режиму старі доріжки не віддаються.
         key = hashlib.sha1(
-            f"{language}|{provider}|{voice}|{speed}|{text}".encode()
+            f"{language}|{provider}|{voice}|{speed}|{mode}|{text}".encode()
         ).hexdigest()
         cache_file = self._cache_dir / f"{key}.bin"
         if cache_file.exists():
@@ -67,7 +70,7 @@ class TTSService:
                 from app.services.tts_fishdrama import fishdrama_provider
                 data = await asyncio.to_thread(
                     fishdrama_provider.synthesize_sync, text, language,
-                    voice=voice, speed=speed,
+                    voice=voice, speed=speed, mode=mode,
                 )
             except Exception:
                 # fallback: uk → piper, en → edge/piper

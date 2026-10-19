@@ -90,7 +90,7 @@ class PipelineService:
         spoken,correction=self._split_reply(reply)
         audio=b""
         if spoken:
-            try: audio=await tts_service.synthesize(spoken,target_lang)
+            try: audio=await tts_service.synthesize(spoken,target_lang,mode="tutor")
             except Exception: audio=b""
         return {"ok":True,"transcript":user_text,"reply_text":reply,"reply_spoken":spoken,"correction":correction,"drill":None,"audio":audio}
 
@@ -106,7 +106,7 @@ class PipelineService:
         spoken,correction=self._split_reply(reply)
         audio=b""
         if spoken:
-            try: audio=await tts_service.synthesize(spoken,target_lang)
+            try: audio=await tts_service.synthesize(spoken,target_lang,mode="mixed")
             except Exception: audio=b""
         return {"ok":True,"transcript":user_text,"reply_text":reply,"reply_spoken":spoken,"correction":correction,"audio":audio}
     # ---------------- Коуч (українська + дрили) ----------------
@@ -145,13 +145,13 @@ class PipelineService:
         audio = b""
         if spoken:
             try:
-                audio = await tts_service.synthesize(spoken, "uk")
+                audio = await tts_service.synthesize(spoken, "uk", mode="coach")
             except Exception:
                 audio = b""
         drill_audio = b""
         if drill_en:
             try:
-                drill_audio = await tts_service.synthesize(drill_en, "en")
+                drill_audio = await tts_service.synthesize(drill_en, "en", mode="coach")
             except Exception:
                 drill_audio = b""
         return {

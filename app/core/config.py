@@ -60,6 +60,24 @@ class Settings(BaseSettings):
     # --- Fish Audio Drama 3 (local SGLang-Omni server, docs/DECISIONS.md) ---
     fish_tts_base_url: str = "http://127.0.0.1:8000"
     fish_tts_timeout_s: float = 30.0       # synthesis takes 2-8 s; leave headroom
+    # Fixed reference voices (SHA-256 in models/drama3-voices-MANIFEST.json):
+    # cloning from the same clip keeps the timbre stable across turns.
+    fish_voice_base_dir: str = r"D:\models\fishaudio\voices"
+    # Per-mode reference voice: "<wav file>|<its transcript>".
+    fish_tts_mode_voices: dict = {
+        "tutor": "tutor.wav|[warm, friendly female tutor, clear and encouraging] Привіт! Я Міра, твій тьютор. Сьогодні ми розберемо прості фрази для подорожей.",
+        "coach": "coach.wav|[relaxed, playful male conversation partner, natural and curious] Привіт, як справи? Розкажи, що цікавого сталося сьогодні, і я підтримаю розмову.",
+        "mixed": "mixed.wav|[bright bilingual storyteller, switches between languages smoothly] Hello! Привіт! Today we mix languages: Сьогодні по-українськи, tomorrow in English!",
+    }
+    # Short tone labels for the settings UI (Ukrainian).
+    fish_voice_tones: dict = {
+        "tutor": "👩‍🏫 Mira (тьютор) — тепла жіноча, чітка й підбадьорлива",
+        "coach": "🧑‍🏫 Співрозмовник (коуч) — розслаблений чоловічий, природний",
+        "mixed": "🌐 Оповідач (змішаний) — двомовний, плавно перемикає мови",
+    }
+    # Manual stress hints do not help: Drama 3 API supports phoneme tags only
+    # for en (CMU Arpabet), zh (pinyin), ja (romaji). Measured on 19.10.2026:
+    # uk stress errors > Supertonic. Keep Supertonic as default (DECISIONS.md).
     # Додаток
     model_profile: str = "high"           # high | medium | low | cpu
     database_path: str = "data/miraspeak.db"
