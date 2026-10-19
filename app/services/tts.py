@@ -60,7 +60,25 @@ class TTSService:
         # - українська → Piper uk_UA (офлайн)
         # - англійська → edge (онлайн, якість), запасний Piper en_US
         # provider=supertonic → один офлайн-рушій для uk і en (Agent-brief.MD).
-        if provider == "supertonic":
+        # provider=fishdrama → локальний сервер Drama 3 (один рушій для uk і en,
+        # див. docs/DECISIONS.md); недоступність сервера → той самий фолбек.
+        if provider == "fishdrama":
+            try:
+                from app.services.tts_fishdrama import fishdrama_provider
+                data = await asyncio.to_thread(
+                    fishdrama_provider.synthesize_sync, text, language,
+                    voice=voice, speed=speed,
+                )
+            except Exception:
+                # fallback: uk → piper, en → edge/piper
+                if language.startswith("uk"):
+                    data = await asyncio.to_thread(self._piper_sync, text, language)
+                else:
+                    try:
+                        data = await self._edge(text, language)
+                    except Exception:
+                        data = await asyncio.to_thread(self._piper_sync, text, language)
+        elif provider == "supertonic":
             try:
                 from app.services.tts_supertonic import supertonic_provider
                 data = await asyncio.to_thread(

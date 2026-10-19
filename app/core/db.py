@@ -218,7 +218,9 @@ def streak() -> int:
     with get_conn() as conn:
         rows = conn.execute("SELECT day FROM progress ORDER BY day DESC").fetchall()
     days = {r["day"] for r in rows}
-    n, cur = 0, dt.date.today()
+    # progress.day пишеться як UTC (_now()[:10]) — і день тут теж UTC,
+    # інакше після локальної півночі (до півночі UTC) streak падає в 0.
+    n, cur = 0, dt.datetime.now(dt.timezone.utc).date()
     while cur.isoformat() in days:
         n += 1
         cur -= dt.timedelta(days=1)

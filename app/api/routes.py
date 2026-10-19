@@ -243,7 +243,7 @@ async def get_settings():
     return {
         "settings": us,
         "voices": ["F1", "F2", "F3", "F4", "F5", "M1", "M2", "M3", "M4", "M5"],
-        "providers": ["supertonic", "piper", "edge"],
+        "providers": ["fishdrama", "supertonic", "piper", "edge"],
         "levels": available_levels(),
         "scenarios": available_scenarios(),
         "target_languages": available_target_languages(),
@@ -272,6 +272,14 @@ async def save_settings(req: SettingsSaveRequest):
         if not (0.5 <= v <= 2.0):
             raise HTTPException(status_code=422, detail="швидкість мови має бути в межах 0.5–2.0")
         updates["supertonic_speed"] = v
+
+    if "tts_provider" in updates and updates["tts_provider"] is not None:
+        allowed = ("fishdrama", "supertonic", "piper", "edge")
+        if updates["tts_provider"] not in allowed:
+            raise HTTPException(
+                status_code=422,
+                detail=f"невідомий TTS-провайдер (дозволено: {', '.join(allowed)})",
+            )
 
     if "coach_template" in updates and updates["coach_template"] is not None:
         if not updates["coach_template"].strip():

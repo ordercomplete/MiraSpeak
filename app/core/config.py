@@ -57,6 +57,9 @@ class Settings(BaseSettings):
     supertonic_model_dir: str = r"D:\models\tts\supertonic-3"
     supertonic_voice: str = "F1"          # preset style: F1-F5, M1-M5
     supertonic_speed: float = 1.05
+    # --- Fish Audio Drama 3 (local SGLang-Omni server, docs/DECISIONS.md) ---
+    fish_tts_base_url: str = "http://127.0.0.1:8000"
+    fish_tts_timeout_s: float = 30.0       # synthesis takes 2-8 s; leave headroom
     # Додаток
     model_profile: str = "high"           # high | medium | low | cpu
     database_path: str = "data/miraspeak.db"

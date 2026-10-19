@@ -97,7 +97,7 @@ git pull --ff-only
 - [x] `git pull --ff-only` виконано першим кроком.
 - [x] `LICENSE` прочитано, висновок у `docs/DECISIONS.md`.
 - [x] Сервер Drama 3 піднято локально, тест uk+en пройшов, VRAM зафіксовано.
-- [ ] `FishDramaProvider` + гілка у `tts.py` + конфіг.
-- [ ] `fishdrama` з'явився у `GET /api/settings.providers`, працює тест голосу.
-- [ ] Фолбек при недоступному сервері працює; `pytest` зелений; мережа заблокована тестом.
+- [x] `FishDramaProvider` + гілка у `tts.py` + конфіг.
+- [x] `fishdrama` з'явився у `GET /api/settings.providers`, працює тест голосу.
+- [x] Фолбек при недоступному сервері працює; `pytest` зелений; мережа заблокована тестом.
 - [ ] Bake-off-прогін, звіт, рішення в `DECISIONS.md`.

@@ -130,7 +130,7 @@
   <button id="handsfree" class="chat-only" title="Безкнопкова розмова: Mira сама слухає після кожної відповіді">🎧 Hands-Free: OFF</button>
   <button id="settingsbtn" title="Налаштування (голос, швидкість)">⚙</button>
   <span id="status">Завантаження…</span>
-  <span title="Голос Mira згенеровано штучним інтелектом (Supertonic 3, ліцензія OpenRAIL-M)" style="font-size:11px;color:var(--muted)">🤖 AI-голос</span>
+  <span id="ailabel" title="Голос Mira згенеровано штучним інтелектом (Supertonic 3, ліцензія OpenRAIL-M)" style="font-size:11px;color:var(--muted)">🤖 AI-голос</span>
 </header>
 
 <div id="settingspanel" style="display:none">
@@ -781,6 +781,13 @@ async function loadSettings() {
       '<option value="' + v + '"' + (v === d.settings.supertonic_voice ? ' selected' : '') + '>' + v + '</option>').join('');
     setProvider.innerHTML = d.providers.map(p =>
       '<option value="' + p + '"' + (p === d.settings.tts_provider ? ' selected' : '') + '>' + p + '</option>').join('');
+    // Позначка «AI-голос» у шапці: який саме рушій зараз озвучує відповіді.
+    const aiLabel = document.getElementById('ailabel');
+    if (aiLabel) {
+      aiLabel.title = d.settings.tts_provider === 'fishdrama'
+        ? 'Голос Mira згенеровано ШІ: Fish Audio Drama 3 (локальний сервер, ліцензія Fish Audio Community)'
+        : 'Голос Mira згенеровано штучним інтелектом (Supertonic 3, ліцензія OpenRAIL-M)';
+    }
     setSpeed.value = d.settings.supertonic_speed;
     setSpeedVal.textContent = Number(d.settings.supertonic_speed).toFixed(2);
     const s = d.settings;

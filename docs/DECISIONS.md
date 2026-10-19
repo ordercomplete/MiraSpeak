@@ -34,6 +34,14 @@
 - **Попередження з лога (очікувано для sm_86):** `codebook sampling: PyTorch, untested GPU sm_86`, `tower fused layers: off` (Hopper-only), `drama3-int4 quantization is not fully optimized yet` — Triton attention backend працює, як і вимагає документація.
 - **Висновок гейту: ПРОЙДЕНО.** Далі за планом — Крок 2 (провайдер `FishDramaProvider`). Ліцензія дозволяє некомерційне використання (див. вище).
 
+## 2026-10-19 — Кроки 2–6 плану впроваджено: `fishdrama` працює наскрізно
+
+- **Нові/змінені файли:** `app/services/tts_fishdrama.py` (новий `FishDramaProvider`: `available()`, `synthesize_sync() -> WAV`, voice/speed ігноруються — в API їх немає), гілка `provider == "fishdrama"` у `app/services/tts.py` (фолбек uk→piper, en→edge/piper), `app/core/config.py` (`FISH_TTS_BASE_URL`, `FISH_TTS_TIMEOUT_S`), `app/api/routes.py` (`fishdrama` у `providers` + валідація 422), `static/index.html` (динамічна позначка AI-голосу), `tests/test_tts_fishdrama.py` (7 тестів без мережі), `.env` (змінні сервера).
+- **Наскрізна перевірка (живий сервер, provider=fishdrama):** uk 406 КБ/2.1 с, en 258 КБ/0.9 с — обидва WAV PCM 44.1 kHz ✔
+- **Супутній фікс:** `streak()` у `app/core/db.py` читав локальну `date.today()`, а `progress.day` пишеться в UTC → після локальної півночі streak падав у 0; узгоджено на UTC.
+- **Тести:** `pytest` — 12 passed.
+- **Статус:** провайдер за замовчуванням НЕ змінено (`supertonic`); залишився **Крок 7 — bake-off** (порівняння голосів на слух) за власником.
+
 ## 2026-10-19 — Ліцензія Drama 3 прочитана (крок 1 плану, пункт 2)
 
 - **Джерело:**
